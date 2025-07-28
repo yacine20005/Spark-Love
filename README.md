@@ -25,13 +25,13 @@
 - **Synchronization**: Your data is saved and synced in real time
 - **Daily Journal**: Share daily texts and photos with your partner
 
-### 🎬 Film Compatibility
+### 🎬 Movie Compatibility
 
-- **Film Swipe**: Swipe through movie suggestions. When both partners swipe right on a film, it's a match! Discover movies you'll both love to watch together.
+- **Movie Swipe**: Swipe through movie suggestions. When both partners swipe right on a movie, it's a match! Discover movies you'll both love to watch together.
 
 ### 📅 Date Compatibility
 
-- **Date Swipe**: Explore a curated list of date ideas. Swipe right on activities you'd enjoy, categorized for easy Browse. Find the perfect date night that appeals to both of you!
+- **Date Swipe**: Explore a curated list of date ideas. Swipe right on activities you'd enjoy, categorized for easy browsing. Find the perfect date night that appeals to both of you!
 
 ### 💎 Premium Model
 
