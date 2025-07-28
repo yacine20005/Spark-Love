@@ -70,8 +70,8 @@ export const QuizScreen: React.FC = () => {
 
   const handleCategoryPress = (category: QuizCategory) => {
     setSelectedCategory(category);
-    // TODO: Navigate to quiz questions screen
-    console.log("Selected category:", category);
+    // Navigation vers l'écran de questions pour la catégorie sélectionnée
+    navigation.navigate("QuizQuestionsScreen", { category });
   };
 
   const getAvailableCategories = () => {

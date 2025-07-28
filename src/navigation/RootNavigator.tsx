@@ -7,6 +7,9 @@ import { RootStackParamList } from "../types/navigation";
 const Stack = createStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
+  // Import dynamique pour éviter les problèmes de dépendances circulaires
+  const QuizQuestionsScreen =
+    require("../screens/QuizQuestionsScreen").QuizQuestionsScreen;
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -15,8 +18,10 @@ export const RootNavigator: React.FC = () => {
         }}
       >
         <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-        {/* Add other screens here when needed */}
-        {/* <Stack.Screen name="QuizQuestionsScreen" component={QuizQuestionsScreen} /> */}
+        <Stack.Screen
+          name="QuizQuestionsScreen"
+          component={QuizQuestionsScreen}
+        />
         {/* <Stack.Screen name="ProfileScreen" component={ProfileScreen} /> */}
         {/* <Stack.Screen name="SettingsScreen" component={SettingsScreen} /> */}
       </Stack.Navigator>
