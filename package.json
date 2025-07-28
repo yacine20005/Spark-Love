@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@babel/runtime": "^7.20.6",
     "@expo-google-fonts/inter": "^0.4.1",
     "@expo-google-fonts/poppins": "^0.4.0",
     "@react-navigation/bottom-tabs": "^7.4.4",
@@ -22,9 +23,9 @@
     "react": "19.0.0",
     "react-native": "0.79.5",
     "react-native-dotenv": "^3.4.11",
-    "react-native-gesture-handler": "^2.27.2",
-    "react-native-safe-area-context": "^5.5.2",
-    "react-native-screens": "^4.13.1",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1",
     "react-native-vector-icons": "^10.3.0"
   },
   "devDependencies": {
