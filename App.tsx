@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import * as Font from "expo-font";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -14,7 +15,7 @@ import {
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
-import { HomeScreen } from "./src/screens/HomeScreen";
+import { RootNavigator } from "./src/navigation/RootNavigator";
 import { COLORS } from "./src/constants/colors";
 
 export default function App() {
@@ -47,10 +48,10 @@ export default function App() {
   }
 
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar style="light" />
-      <HomeScreen />
-    </>
+      <RootNavigator />
+    </SafeAreaProvider>
   );
 }
 

@@ -75,9 +75,11 @@ export const SPACING = {
 export const OPACITY = {
   glass: 0.8,
   secondary: 0.9,
+  disabled: 0.5,
 } as const;
 
 export const LAYOUT = {
+  quizCardMinHeight: 160,
   featureCardMinHeight: 120,
   statDividerWidth: 1,
   statDividerHeight: 40,

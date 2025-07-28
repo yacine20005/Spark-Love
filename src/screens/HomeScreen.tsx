@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,9 +8,14 @@ import {
   StatusBar,
   Dimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { GlassCard } from "../components/GlassCard";
 import { GradientButton } from "../components/GradientButton";
+import { useNavigation } from "@react-navigation/native";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { MainTabParamList } from "../types/navigation";
+import { QuizService } from "../lib/supabase";
 import {
   COLORS,
   FONTS,
@@ -24,6 +29,28 @@ import {
 const { width, height } = Dimensions.get("window");
 
 export const HomeScreen: React.FC = () => {
+  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
+  const insets = useSafeAreaInsets();
+  const [connectionStatus, setConnectionStatus] =
+    useState<string>("Testing...");
+
+  // Test Supabase connection
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const questions = await QuizService.getActiveQuestions("communication");
+        setConnectionStatus(
+          `✅ Connected! Found ${questions.length} questions`
+        );
+      } catch (error) {
+        console.error("Supabase connection error:", error);
+        setConnectionStatus("❌ Connection failed - Check your .env file");
+      }
+    };
+
+    testConnection();
+  }, []);
+
   const features = [
     {
       title: "💕 Interactive Quizzes",
@@ -64,12 +91,13 @@ export const HomeScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Header Section */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + SPACING.lg }]}>
           <GlassCard style={styles.headerCard} opacity={OPACITY.glass}>
-            <Text style={styles.appTitle}>Spark-Love</Text>
+            <Text style={styles.appTitle}>Spark Love</Text>
             <Text style={styles.subtitle}>
               Strengthen your relationship, one question at a time 💕
             </Text>
+            <Text style={styles.connectionStatus}>{connectionStatus}</Text>
           </GlassCard>
         </View>
 
@@ -77,7 +105,9 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.quickActions}>
           <GradientButton
             title="Start a Quiz"
-            onPress={() => console.log("Start Quiz")}
+            onPress={() => {
+              navigation.navigate("Quiz");
+            }}
             size="large"
             style={styles.mainButton}
           />
@@ -161,7 +191,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
     marginBottom: SPACING.xl,
   },
   headerCard: {
@@ -184,6 +213,12 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: "center",
     lineHeight: LAYOUT.lineHeight.subtitle,
+  },
+  connectionStatus: {
+    ...FONTS.caption,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+    marginTop: SPACING.sm,
   },
   quickActions: {
     paddingHorizontal: SPACING.lg,
