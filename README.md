@@ -16,13 +16,12 @@
 
 ### 👥 Couple Experience
 
-- **Mini-Games**: Relationship challenges to complete together
 - **Personalized Notifications**: Reminders and suggestions to keep your connection strong
 - **Couple Profiles**: Create your profiles and connect with your partner
 
 ### 📖 Shared Journal
 
-- **Private Space**: Secure diary to share your thoughts (optional)
+- **Private Space**: Secure diary to share your thoughts
 - **Synchronization**: Your data is saved and synced in real time
 - **Daily Journal**: Share daily texts and photos with your partner
 
