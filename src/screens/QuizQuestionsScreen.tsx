@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,16 @@ import {
   StatusBar,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { GradientButton } from "../components/GradientButton";
 import { GlassCard } from "../components/GlassCard";
-import { QuizCategory, QuestionType } from "../types/quiz";
-import { SAMPLE_QUESTIONS } from "../constants/quiz";
+import { QuizCategory, Question } from "../types/quiz";
+import { RootStackParamList } from '../types/navigation';
+import { QuizService } from "../lib/supabase";
 import { COLORS, FONTS, SPACING, OPACITY } from "../constants";
 
 interface QuizQuestionsScreenProps {
@@ -23,61 +27,71 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
   route,
 }) => {
   const { category } = route.params;
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
-  const questions = SAMPLE_QUESTIONS.filter((q) => q.category === category);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<any[]>([]);
   const [textInput, setTextInput] = useState("");
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setLoading(true);
+        const fetchedQuestions = await QuizService.getActiveQuestions(category);
+        if (fetchedQuestions) {
+          // @ts-ignore
+          setQuestions(fetchedQuestions);
+        }
+      } catch (err) {
+        setError("Failed to load questions. Please try again later.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, [category]);
 
   const question = questions[current];
   const isLast = current === questions.length - 1;
 
   const handleAnswer = (answer: any) => {
-    setAnswers((prev) => [...prev, answer]);
+    const newAnswers = [...answers, answer];
+    setAnswers(newAnswers);
     setTextInput("");
     if (!isLast) {
       setCurrent((c) => c + 1);
+    } else {
+      navigation.replace('QuizCompletionScreen', { category, answers: newAnswers });
     }
-    // TODO: handle finish (show summary or send to backend)
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.progressText}>Loading questions...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centered}>
+          <Text style={styles.questionText}>{error}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!question) {
-    // Fin du quiz ou aucune question
-    if (questions.length > 0 && answers.length === questions.length) {
-      // Toutes les questions ont été répondues
-      return (
-        <SafeAreaView style={styles.container}>
-          <StatusBar
-            barStyle="light-content"
-            backgroundColor="transparent"
-            translucent
-          />
-          <View style={styles.backgroundGradient} />
-          <View style={styles.centered}>
-            <Text style={styles.questionText}>
-              Bravo ! Vous avez terminé la série 🎉
-            </Text>
-            <Text style={styles.progressText}>
-              Vous avez répondu à toutes les questions.
-            </Text>
-            {/* Affichage du récapitulatif des réponses */}
-            <View style={{ marginVertical: 24, width: "100%" }}>
-              {questions.map((q, i) => (
-                <View key={i} style={{ marginBottom: 12 }}>
-                  <Text style={[styles.progressText, { fontWeight: "bold" }]}>
-                    {q.text}
-                  </Text>
-                  <Text style={styles.progressText}>
-                    Votre réponse : {answers[i]?.toString()}
-                  </Text>
-                </View>
-              ))}
-            </View>
-            {/* TODO: bouton pour revenir à l'accueil ou partager */}
-          </View>
-        </SafeAreaView>
-      );
-    }
     // Pas de questions dans cette catégorie
     return (
       <SafeAreaView style={styles.container}>
@@ -165,7 +179,7 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
               <View style={{ marginBottom: 12 }}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Votre réponse..."
+                  placeholder="Your answer..."
                   placeholderTextColor={COLORS.textSecondary}
                   value={textInput}
                   onChangeText={setTextInput}
@@ -173,7 +187,7 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
                 />
               </View>
               <GradientButton
-                title="Valider la réponse"
+                title="Submit Answer"
                 onPress={() =>
                   textInput.trim() && handleAnswer(textInput.trim())
                 }

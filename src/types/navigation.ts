@@ -5,9 +5,10 @@ import { QuizCategory } from './quiz';
 
 // Root Stack Navigator
 export type RootStackParamList = {
-  MainTabs: undefined;
+  MainTabs: { screen: string } | undefined;
   QuizScreen: undefined;
   QuizQuestionsScreen: { category: QuizCategory };
+  QuizCompletionScreen: { category: QuizCategory; answers: any[] };
   ProfileScreen: undefined;
   SettingsScreen: undefined;
 };
