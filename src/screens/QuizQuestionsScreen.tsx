@@ -5,17 +5,17 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import Slider from "@react-native-community/slider";
 import { GradientButton } from "../components/GradientButton";
 import { GlassCard } from "../components/GlassCard";
 import { QuizCategory, Question } from "../types/quiz";
-import { RootStackParamList } from '../types/navigation';
+import { RootStackParamList } from "../types/navigation";
 import { QuizService } from "../lib/supabase";
 import { COLORS, FONTS, SPACING, OPACITY } from "../constants";
 
@@ -28,13 +28,15 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
 }) => {
   const { category } = route.params;
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const insets = useSafeAreaInsets();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<any[]>([]);
   const [textInput, setTextInput] = useState("");
+  const [scaleValue, setScaleValue] = useState<number | undefined>();
+
+  const question = questions[current];
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -56,17 +58,25 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
     fetchQuestions();
   }, [category]);
 
-  const question = questions[current];
+  useEffect(() => {
+    if (question?.type === "scale") {
+      setScaleValue(question.min_scale || 1);
+    }
+  }, [question]);
+
   const isLast = current === questions.length - 1;
 
   const handleAnswer = (answer: any) => {
-    const newAnswers = [...answers, answer];
+    const newAnswers = [...answers, { question_id: question.id, answer }];
     setAnswers(newAnswers);
     setTextInput("");
     if (!isLast) {
       setCurrent((c) => c + 1);
     } else {
-      navigation.replace('QuizCompletionScreen', { category, answers: newAnswers });
+      navigation.replace("QuizCompletionScreen", {
+        category,
+        answers: newAnswers,
+      });
     }
   };
 
@@ -92,7 +102,6 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
   }
 
   if (!question) {
-    // Pas de questions dans cette catégorie
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar
@@ -135,21 +144,20 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
           )}
           {question.type === "scale" && (
             <View style={styles.optionsContainer}>
-              {[
-                ...Array(
-                  (question.max_scale || 10) - (question.min_scale || 1) + 1
-                ),
-              ].map((_, i) => {
-                const val = (question.min_scale || 1) + i;
-                return (
-                  <GradientButton
-                    key={val}
-                    title={val.toString()}
-                    onPress={() => handleAnswer(val)}
-                    style={styles.optionButton}
-                  />
-                );
-              })}
+              <View style={styles.sliderContainer}>
+                <Text style={styles.sliderValue}>{scaleValue}</Text>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={question.min_scale ?? 0}
+                  maximumValue={question.max_scale ?? 10}
+                  step={1}
+                  value={scaleValue}
+                  onValueChange={setScaleValue}
+                  minimumTrackTintColor={COLORS.primary}
+                  maximumTrackTintColor={COLORS.textSecondary}
+                  thumbTintColor={COLORS.primary}
+                />
+              </View>
               <View style={styles.scaleLabels}>
                 <Text style={styles.scaleLabel}>
                   {question.scale_labels?.min}
@@ -158,6 +166,11 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
                   {question.scale_labels?.max}
                 </Text>
               </View>
+              <GradientButton
+                title="Submit"
+                onPress={() => handleAnswer(scaleValue)}
+                style={styles.optionButton}
+              />
             </View>
           )}
           {question.type === "yes_no" && (
@@ -205,7 +218,6 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
   );
 };
 
-import { TextInput } from "react-native";
 const styles = StyleSheet.create({
   textInput: {
     minHeight: 44,
@@ -269,5 +281,18 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: "center",
     marginTop: SPACING.md,
+  },
+  sliderContainer: {
+    alignItems: "center",
+    marginVertical: SPACING.md,
+  },
+  sliderValue: {
+    ...FONTS.h1,
+    color: COLORS.primary,
+    marginBottom: SPACING.md,
+  },
+  slider: {
+    width: "100%",
+    height: 40,
   },
 });

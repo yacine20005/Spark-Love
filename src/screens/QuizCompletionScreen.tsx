@@ -36,19 +36,19 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({ rout
       <View style={styles.backgroundGradient} />
       <View style={styles.content}>
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
-          <Text style={styles.title}>🎉 Quiz Terminé ! 🎉</Text>
+          <Text style={styles.title}>🎉 Quiz Completed! 🎉</Text>
           <Text style={styles.subtitle}>
-            Vos réponses pour la catégorie "{category}" ont bien été enregistrées.
+            Your answers for the "{category}" category have been saved.
           </Text>
           <Text style={styles.infoText}>
-            En attente de votre partenaire...
+            Waiting for your partner...
           </Text>
           <Text style={styles.infoText}>
-            Vous serez notifié(e) dès que votre partenaire aura terminé le quiz à son tour. Vous pourrez alors comparer vos réponses !
+            You will be notified when your partner completes the quiz. Then you can compare your answers!
           </Text>
         </GlassCard>
         <GradientButton
-          title="Faire un autre quiz"
+          title="Take another quiz"
           onPress={handleBackToQuizzes}
           style={styles.button}
         />
