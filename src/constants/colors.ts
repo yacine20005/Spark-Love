@@ -50,4 +50,4 @@ export const GRADIENTS = {
   sunset: [COLORS.secondary, '#FFB347'] as string[], // Orange to Golden Orange
   movie: ['#8E44AD', '#9B59B6'] as string[], // Purple gradient for movies
   dates: ['#3498DB', '#2980B9'] as string[], // Blue gradient for dates
-}; 
+};

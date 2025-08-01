@@ -60,7 +60,7 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
 
   useEffect(() => {
     if (question?.type === "scale") {
-      setScaleValue(question.min_scale || 1);
+      setScaleValue(question.min_scale ?? 0);
     }
   }, [question]);
 

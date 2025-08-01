@@ -17,6 +17,8 @@ import {
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { COLORS } from "./src/constants/colors";
+import { AuthProvider } from "./src/context/AuthContext";
+import "react-native-url-polyfill/auto";
 
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -49,8 +51,10 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
-      <RootNavigator />
+      <AuthProvider>
+        <StatusBar style="light" />
+        <RootNavigator />
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

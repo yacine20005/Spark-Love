@@ -1,15 +1,20 @@
-import React from "react";
-import { View, Text, StyleSheet, SafeAreaView, StatusBar } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { GlassCard } from "../components/GlassCard";
-import { useNavigation } from "@react-navigation/native";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { MainTabParamList } from "../types/navigation";
-import { COLORS, FONTS, SPACING, OPACITY } from "../constants";
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassCard } from '../components/GlassCard';
+import { GradientButton } from '../components/GradientButton';
+import { useAuth } from '../context/AuthContext';
+import { COLORS, FONTS, SPACING, OPACITY } from '../constants';
 
 export const ProfileScreen: React.FC = () => {
-  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const insets = useSafeAreaInsets();
+  const { user, signOut } = useAuth();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,11 +35,11 @@ export const ProfileScreen: React.FC = () => {
         </GlassCard>
 
         <GlassCard style={styles.featureCard} opacity={OPACITY.glass}>
-          <Text style={styles.featureTitle}>Coming Soon!</Text>
+          <Text style={styles.featureTitle}>Your Account</Text>
           <Text style={styles.featureDescription}>
-            This section will allow you to manage your profile, couple settings,
-            and app preferences.
+            You are signed in as: {user?.email}
           </Text>
+          <GradientButton title="Sign Out" onPress={signOut} style={{ marginTop: SPACING.lg }} />
         </GlassCard>
       </View>
     </SafeAreaView>

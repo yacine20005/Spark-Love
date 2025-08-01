@@ -8,48 +8,21 @@ import {
   StatusBar,
   Dimensions,
 } from "react-native";
+import { COLORS, FONTS, SPACING, OPACITY, GRADIENTS, LAYOUT } from "../constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { GlassCard } from "../components/GlassCard";
 import { GradientButton } from "../components/GradientButton";
 import { useNavigation } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { MainTabParamList } from "../types/navigation";
-import { QuizService } from "../lib/supabase";
-import {
-  COLORS,
-  FONTS,
-  SIZES,
-  SPACING,
-  GRADIENTS,
-  OPACITY,
-  LAYOUT,
-} from "../constants/index";
+import { useAuth } from "../context/AuthContext";
 
 const { width, height } = Dimensions.get("window");
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const insets = useSafeAreaInsets();
-  const [connectionStatus, setConnectionStatus] =
-    useState<string>("Testing...");
-
-  // Test Supabase connection
-  useEffect(() => {
-    const testConnection = async () => {
-      try {
-        const questions = await QuizService.getActiveQuestions("communication");
-        setConnectionStatus(
-          `✅ Connected! Found ${questions.length} questions`
-        );
-      } catch (error) {
-        console.error("Supabase connection error:", error);
-        setConnectionStatus("❌ Connection failed - Check your .env file");
-      }
-    };
-
-    testConnection();
-  }, []);
+  const { user, signOut } = useAuth();
 
   const features = [
     {
@@ -95,29 +68,16 @@ export const HomeScreen: React.FC = () => {
           <GlassCard style={styles.headerCard} opacity={OPACITY.glass}>
             <Text style={styles.appTitle}>Spark Love</Text>
             <Text style={styles.subtitle}>
-              Strengthen your relationship, one question at a time 💕
+              Welcome, {user?.email}
             </Text>
-            <Text style={styles.connectionStatus}>{connectionStatus}</Text>
+            <GradientButton
+              title="Sign Out"
+              onPress={signOut}
+              gradient={GRADIENTS.secondary}
+              size="medium"
+              style={styles.secondaryButton}
+            />
           </GlassCard>
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <GradientButton
-            title="Start a Quiz"
-            onPress={() => {
-              navigation.navigate("Quiz");
-            }}
-            size="large"
-            style={styles.mainButton}
-          />
-          <GradientButton
-            title="Sign In"
-            onPress={() => console.log("Connect")}
-            gradient={GRADIENTS.secondary}
-            size="medium"
-            style={styles.secondaryButton}
-          />
         </View>
 
         {/* Features Grid */}

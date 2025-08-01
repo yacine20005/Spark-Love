@@ -6,6 +6,7 @@ import { QuizCategory } from './quiz';
 // Root Stack Navigator
 export type RootStackParamList = {
   MainTabs: { screen: string } | undefined;
+  AuthScreen: undefined;
   QuizScreen: undefined;
   QuizQuestionsScreen: { category: QuizCategory };
   QuizCompletionScreen: { category: QuizCategory; answers: any[] };
