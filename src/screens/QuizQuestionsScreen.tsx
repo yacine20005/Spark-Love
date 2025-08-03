@@ -17,6 +17,7 @@ import { GlassCard } from "../components/GlassCard";
 import { QuizCategory, Question } from "../types/quiz";
 import { RootStackParamList } from "../types/navigation";
 import { QuizService } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext"; // Import useAuth
 import { COLORS, FONTS, SPACING, OPACITY } from "../constants";
 
 interface QuizQuestionsScreenProps {
@@ -28,6 +29,8 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
 }) => {
   const { category } = route.params;
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { user, activeCouple } = useAuth(); // Get user and active couple from context
+
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,15 +70,24 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
   const isLast = current === questions.length - 1;
 
   const handleAnswer = (answer: any) => {
-    const newAnswers = [...answers, { question_id: question.id, answer }];
+    const newAnswer = {
+      question_id: question.id,
+      answer,
+      user_id: user?.id,
+      couple_id: activeCouple?.id || null, // Add couple_id to the answer
+    };
+
+    const newAnswers = [...answers, newAnswer];
     setAnswers(newAnswers);
     setTextInput("");
+
     if (!isLast) {
       setCurrent((c) => c + 1);
     } else {
       navigation.replace("QuizCompletionScreen", {
         category,
         answers: newAnswers,
+        coupleId: activeCouple?.id || null, // Pass coupleId to completion screen
       });
     }
   };

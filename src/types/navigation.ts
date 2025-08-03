@@ -1,17 +1,23 @@
 import { StackNavigationProp } from '@react-navigation/stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { CompositeNavigationProp } from '@react-navigation/native';
-import { QuizCategory } from './quiz';
+import { QuizCategory } from "./quiz";
 
-// Root Stack Navigator
 export type RootStackParamList = {
-  MainTabs: { screen: string } | undefined;
+  MainTabNavigator: undefined;
   AuthScreen: undefined;
   QuizScreen: undefined;
   QuizQuestionsScreen: { category: QuizCategory };
-  QuizCompletionScreen: { category: QuizCategory; answers: any[] };
+  QuizCompletionScreen: {
+    category: QuizCategory;
+    answers: any[];
+    coupleId: string | null;
+  };
+  ComparisonScreen: { // New screen for comparing answers
+    categoryId: QuizCategory;
+    coupleId: string;
+  };
   ProfileScreen: undefined;
-  SettingsScreen: undefined;
 };
 
 // Main Tab Navigator

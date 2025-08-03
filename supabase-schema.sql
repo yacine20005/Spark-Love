@@ -1,8 +1,6 @@
 -- Drop existing tables and types to allow for a clean re-run
-DROP TABLE IF EXISTS "quiz_progress" CASCADE;
-DROP TABLE IF EXISTS "quiz_sessions" CASCADE;
-DROP TABLE IF EXISTS "couple_profiles" CASCADE;
 DROP TABLE IF EXISTS "user_answers" CASCADE;
+DROP TABLE IF EXISTS "couples" CASCADE;
 DROP TABLE IF EXISTS "questions" CASCADE;
 DROP TYPE IF EXISTS "quiz_category" CASCADE;
 DROP TYPE IF EXISTS "question_type" CASCADE;
@@ -34,7 +32,7 @@ CREATE TYPE question_type AS ENUM (
   'yes_no'
 );
 
--- Questions table
+-- Questions table (no changes here)
 CREATE TABLE questions (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   text TEXT NOT NULL,
@@ -50,63 +48,38 @@ CREATE TABLE questions (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- User answers table
+-- Couples table to store links between users
+CREATE TABLE couples (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user1_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user2_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    linking_code TEXT UNIQUE, -- Temporary code for linking
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    -- Ensures that user1_id and user2_id pair is unique regardless of order
+    CONSTRAINT unique_couple_pair CHECK (user1_id < user2_id),
+    UNIQUE (user1_id, user2_id)
+);
+
+-- User answers table, now with a link to a couple
 CREATE TABLE user_answers (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-  answer TEXT NOT NULL, -- Store as text, can be number or string
+  couple_id UUID REFERENCES couples(id) ON DELETE CASCADE, -- Can be NULL for solo answers
+  answer TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, question_id)
-);
-
--- Couple profiles table
-CREATE TABLE couple_profiles (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  partner1_id UUID NOT NULL,
-  partner2_id UUID NOT NULL,
-  partner1_name TEXT NOT NULL,
-  partner2_name TEXT NOT NULL,
-  relationship_start_date DATE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(partner1_id, partner2_id)
-);
-
--- Quiz sessions table
-CREATE TABLE quiz_sessions (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  couple_id UUID NOT NULL REFERENCES couple_profiles(id) ON DELETE CASCADE,
-  category quiz_category NOT NULL,
-  questions JSONB NOT NULL, -- Array of question IDs
-  partner1_answers JSONB DEFAULT '[]', -- Array of answer objects
-  partner2_answers JSONB DEFAULT '[]', -- Array of answer objects
-  is_completed BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  completed_at TIMESTAMP WITH TIME ZONE
-);
-
--- Quiz progress table
-CREATE TABLE quiz_progress (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  couple_id UUID NOT NULL REFERENCES couple_profiles(id) ON DELETE CASCADE,
-  category quiz_category NOT NULL,
-  questions_answered INTEGER DEFAULT 0,
-  total_questions INTEGER DEFAULT 0,
-  last_quiz_date TIMESTAMP WITH TIME ZONE,
-  compatibility_score INTEGER, -- 0-100
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(couple_id, category)
+  -- A user can answer a question once solo, and once for each couple
+  UNIQUE(user_id, question_id, couple_id)
 );
 
 -- Create indexes for better performance
 CREATE INDEX idx_questions_category ON questions(category);
-CREATE INDEX idx_questions_active ON questions(is_active);
-CREATE INDEX idx_questions_release_date ON questions(release_date);
 CREATE INDEX idx_user_answers_user_id ON user_answers(user_id);
 CREATE INDEX idx_user_answers_question_id ON user_answers(question_id);
-CREATE INDEX idx_quiz_progress_couple_category ON quiz_progress(couple_id, category);
+CREATE INDEX idx_user_answers_couple_id ON user_answers(couple_id);
+CREATE INDEX idx_couples_user1_id ON couples(user1_id);
+CREATE INDEX idx_couples_user2_id ON couples(user2_id);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -121,13 +94,10 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_questions_updated_at BEFORE UPDATE ON questions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_couple_profiles_updated_at BEFORE UPDATE ON couple_profiles
+CREATE TRIGGER update_couples_updated_at BEFORE UPDATE ON couples
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_quiz_progress_updated_at BEFORE UPDATE ON quiz_progress
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Insert sample questions for development
+-- Insert sample questions (keeping the existing ones)
 INSERT INTO questions (text, category, type, options, min_scale, max_scale, scale_labels, release_date) VALUES
 -- Communication
 ('How do you prefer to communicate when we''re not together?', 'communication', 'multiple_choice', '["Calls", "Texts", "Video Calls", "Voice Messages"]', NULL, NULL, NULL, NOW()),
@@ -252,19 +222,139 @@ INSERT INTO questions (text, category, type, options, min_scale, max_scale, scal
 -- Enable Row Level Security (RLS)
 ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_answers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE couple_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE quiz_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE quiz_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE couples ENABLE ROW LEVEL SECURITY;
 
--- Create policies (basic - you'll need to customize based on your auth setup)
+-- Create policies
 CREATE POLICY "Questions are viewable by everyone" ON questions FOR SELECT USING (true);
-CREATE POLICY "User answers are viewable by owner" ON user_answers FOR SELECT USING (true);
-CREATE POLICY "User answers are insertable by owner" ON user_answers FOR INSERT WITH CHECK (true);
-CREATE POLICY "User answers are updatable by owner" ON user_answers FOR UPDATE USING (true);
-CREATE POLICY "Couple profiles are viewable by members" ON couple_profiles FOR SELECT USING (true);
-CREATE POLICY "Couple profiles are insertable by members" ON couple_profiles FOR INSERT WITH CHECK (true);
-CREATE POLICY "Quiz sessions are viewable by couple" ON quiz_sessions FOR SELECT USING (true);
-CREATE POLICY "Quiz sessions are insertable by couple" ON quiz_sessions FOR INSERT WITH CHECK (true);
-CREATE POLICY "Quiz progress is viewable by couple" ON quiz_progress FOR SELECT USING (true);
-CREATE POLICY "Quiz progress is insertable by couple" ON quiz_progress FOR INSERT WITH CHECK (true);
-CREATE POLICY "Quiz progress is updatable by couple" ON quiz_progress FOR UPDATE USING (true); 
+
+-- Policies for user_answers
+CREATE POLICY "Users can manage their own answers" ON user_answers
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Policies for couples
+CREATE POLICY "Users can view couples they are part of" ON couples
+  FOR SELECT
+  USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+
+CREATE POLICY "Users can insert their own couple entries" ON couples
+  FOR INSERT
+  WITH CHECK (auth.uid() = user1_id);
+
+CREATE POLICY "Users can update couple entries to link themselves" ON couples
+  FOR UPDATE
+  USING (
+    -- Allow user1 to update if user2 is null (e.g. change linking_code)
+    (auth.uid() = user1_id AND user2_id IS NULL) OR
+    -- Allow a user to accept an invitation by setting themselves as user2
+    (user2_id IS NULL AND auth.uid() != user1_id)
+  );
+
+CREATE POLICY "Users can delete couples they are part of" ON couples
+  FOR DELETE
+  USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+
+
+-- Functions for linking logic
+CREATE OR REPLACE FUNCTION generate_linking_code()
+RETURNS TEXT AS $$
+DECLARE
+    chars TEXT[] := string_to_array('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', NULL);
+    result TEXT := '';
+    i INTEGER;
+BEGIN
+    FOR i IN 1..6 LOOP
+        result := result || chars[1 + floor(random() * array_length(chars, 1))];
+    END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION create_couple_and_get_code()
+RETURNS TEXT AS $$
+DECLARE
+  new_code TEXT;
+  current_user_id UUID := auth.uid();
+  code_exists BOOLEAN;
+BEGIN
+  LOOP
+    -- 1. Generate a new code
+    new_code := generate_linking_code();
+
+    -- 2. Check if the code already exists
+    SELECT EXISTS (SELECT 1 FROM couples WHERE linking_code = new_code) INTO code_exists;
+
+    -- 3. If it doesn't exist, we can exit the loop
+    IF NOT code_exists THEN
+      EXIT;
+    END IF;
+  END LOOP;
+
+  -- 4. Insert the guaranteed unique code
+  INSERT INTO couples (user1_id, linking_code)
+  VALUES (current_user_id, new_code);
+  
+  RETURN new_code;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION link_partner(p_linking_code TEXT)
+RETURNS UUID AS $$
+DECLARE
+  couple_record couples;
+  current_user_id UUID := auth.uid();
+BEGIN
+  -- Find the couple with the linking code, ignoring case
+  SELECT * INTO couple_record FROM couples WHERE UPPER(linking_code) = UPPER(p_linking_code);
+
+  -- Check if code is valid and not already used
+  IF couple_record IS NULL THEN
+    RAISE EXCEPTION 'Invalid linking code.';
+  END IF;
+
+  IF couple_record.user2_id IS NOT NULL THEN
+    RAISE EXCEPTION 'This invitation has already been used.';
+  END IF;
+
+  -- Check if user is trying to link with themselves
+  IF couple_record.user1_id = current_user_id THEN
+    RAISE EXCEPTION 'You cannot link with yourself.';
+  END IF;
+
+  -- Ensure canonical order (user1_id < user2_id) to use the UNIQUE constraint
+  IF couple_record.user1_id > current_user_id THEN
+    -- This case is tricky. The original entry must be deleted and a new one created
+    -- to maintain the user1 < user2 constraint.
+    DELETE FROM couples WHERE id = couple_record.id;
+    INSERT INTO couples (user1_id, user2_id)
+    VALUES (current_user_id, couple_record.user1_id)
+    RETURNING id INTO couple_record.id;
+  ELSE
+    -- Update the existing record
+    UPDATE couples
+    SET user2_id = current_user_id, linking_code = NULL -- Code is used, so remove it
+    WHERE id = couple_record.id;
+  END IF;
+
+  RETURN couple_record.id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get all couples for the currently authenticated user
+CREATE OR REPLACE FUNCTION get_my_couples()
+RETURNS TABLE(couple_id UUID, partner_id UUID, partner_email TEXT) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    c.id as couple_id, 
+    p.id as partner_id, 
+    p.email::text as partner_email
+  FROM 
+    couples c
+  JOIN auth.users p ON (CASE WHEN c.user1_id = auth.uid() THEN c.user2_id ELSE c.user1_id END) = p.id
+  WHERE 
+    (c.user1_id = auth.uid() OR c.user2_id = auth.uid())
+    AND c.user2_id IS NOT NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

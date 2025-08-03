@@ -1,61 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@env';
+import { QuizCategory } from '../types/quiz';
 
-// Types for Supabase
+// Types for Supabase - updated for new schema
 export type Database = {
   public: {
     Tables: {
       questions: {
+        Row: any; // Keeping it simple for now
+      };
+      couples: {
         Row: {
           id: string;
-          text: string;
-          category: string;
-          type: string;
-          options?: string[];
-          min_scale?: number;
-          max_scale?: number;
-          scale_labels?: {
-            min: string;
-            max: string;
-          };
-          is_active: boolean;
-          release_date: string;
-          created_at: string;
-          updated_at: string;
+          user1_id: string;
+          user2_id: string | null;
+          linking_code: string | null;
         };
         Insert: {
-          id?: string;
-          text: string;
-          category: string;
-          type: string;
-          options?: string[];
-          min_scale?: number;
-          max_scale?: number;
-          scale_labels?: {
-            min: string;
-            max: string;
-          };
-          is_active?: boolean;
-          release_date: string;
-          created_at?: string;
-          updated_at?: string;
+          user1_id: string;
+          linking_code: string;
         };
         Update: {
-          id?: string;
-          text?: string;
-          category?: string;
-          type?: string;
-          options?: string[];
-          min_scale?: number;
-          max_scale?: number;
-          scale_labels?: {
-            min: string;
-            max: string;
-          };
-          is_active?: boolean;
-          release_date?: string;
-          created_at?: string;
-          updated_at?: string;
+          user2_id?: string;
+          linking_code?: string | null;
         };
       };
       user_answers: {
@@ -63,55 +30,25 @@ export type Database = {
           id: string;
           user_id: string;
           question_id: string;
-          answer: string | number;
-          created_at: string;
+          couple_id: string | null;
+          answer: string;
         };
         Insert: {
-          id?: string;
           user_id: string;
           question_id: string;
-          answer: string | number;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          question_id?: string;
-          answer?: string | number;
-          created_at?: string;
-        };
+          couple_id: string | null;
+          answer: string;
+        }[]; // Expect an array for upserting
       };
-      couple_profiles: {
-        Row: {
-          id: string;
-          partner1_id: string;
-          partner2_id: string;
-          partner1_name: string;
-          partner2_name: string;
-          relationship_start_date: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          partner1_id: string;
-          partner2_id: string;
-          partner1_name: string;
-          partner2_name: string;
-          relationship_start_date: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          partner1_id?: string;
-          partner2_id?: string;
-          partner1_name?: string;
-          partner2_name?: string;
-          relationship_start_date?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
+    };
+    Functions: {
+      create_couple_and_get_code: {
+        Args: {};
+        Returns: string;
+      };
+      link_partner: {
+        Args: { p_linking_code: string };
+        Returns: string; // couple_id
       };
     };
   };
@@ -150,74 +87,37 @@ export class QuizService {
     return data;
   }
 
-  // Save user answer
-  static async saveAnswer(userId: string, questionId: string, answer: string | number) {
+  // Save an array of answers
+  static async saveAnswers(answers: Database['public']['Tables']['user_answers']['Insert']) {
     const { data, error } = await supabase
       .from('user_answers')
-      .upsert({
-        user_id: userId,
-        question_id: questionId,
-        answer: answer,
+      .upsert(answers, {
+        onConflict: 'user_id,question_id,couple_id',
       })
-      .select()
-      .single();
+      .select();
 
     if (error) {
-      console.error('Error saving answer:', error);
+      console.error('Error saving answers:', error);
       throw error;
     }
 
     return data;
   }
 
-  // Get user answers for a question
-  static async getUserAnswers(questionId: string) {
+  // Get answers for comparison
+  static async getComparisonAnswers(coupleId: string, categoryId: QuizCategory) {
     const { data, error } = await supabase
       .from('user_answers')
-      .select('*')
-      .eq('question_id', questionId);
+      .select(`
+        answer,
+        user_id,
+        question:questions (*)
+      `)
+      .eq('couple_id', coupleId)
+      .eq('question.category', categoryId);
 
     if (error) {
-      console.error('Error fetching user answers:', error);
-      throw error;
-    }
-
-    return data;
-  }
-
-  // Create couple profile
-  static async createCoupleProfile(profile: {
-    partner1_id: string;
-    partner2_id: string;
-    partner1_name: string;
-    partner2_name: string;
-    relationship_start_date: string;
-  }) {
-    const { data, error } = await supabase
-      .from('couple_profiles')
-      .insert(profile)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating couple profile:', error);
-      throw error;
-    }
-
-    return data;
-  }
-
-  // Get couple profile
-  static async getCoupleProfile(partner1Id: string, partner2Id: string) {
-    const { data, error } = await supabase
-      .from('couple_profiles')
-      .select('*')
-      .or(`partner1_id.eq.${partner1Id},partner2_id.eq.${partner1Id}`)
-      .or(`partner1_id.eq.${partner2Id},partner2_id.eq.${partner2Id}`)
-      .single();
-
-    if (error) {
-      console.error('Error fetching couple profile:', error);
+      console.error('Error fetching comparison answers:', error);
       throw error;
     }
 
