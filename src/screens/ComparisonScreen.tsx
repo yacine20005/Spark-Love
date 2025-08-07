@@ -14,6 +14,8 @@ import { useAuth } from '../context/AuthContext';
 import { GlassCard } from '../components/GlassCard';
 import { COLORS, FONTS, SPACING, OPACITY } from '../constants';
 
+import { Answer, Question } from '../types/quiz';
+
 type ComparisonScreenRouteProp = RouteProp<RootStackParamList, 'ComparisonScreen'>;
 
 interface ComparisonScreenProps {
@@ -24,6 +26,10 @@ interface ComparisonData {
   questionText: string;
   yourAnswer: string;
   partnerAnswer: string;
+}
+
+interface AnswerWithQuestion extends Answer {
+  question: Question;
 }
 
 export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({ route }) => {
@@ -39,15 +45,14 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({ route }) => 
 
       try {
         setLoading(true);
-        const answers = await QuizService.getComparisonAnswers(coupleId, categoryId);
+        const answers: AnswerWithQuestion[] | null = await QuizService.getComparisonAnswers(coupleId, categoryId);
         if (answers) {
           const partnerId = activeCouple.partner.id;
+
           const groupedByQuestion = answers.reduce((acc, ans) => {
-            // @ts-ignore
             const qId = ans.question.id;
             if (!acc[qId]) {
-              // @ts-ignore
-              acc[qId] = { questionText: ans.question.text, yourAnswer: 'N/A', partnerAnswer: 'N/A' };
+              acc[qId] = { questionText: ans.question.text, yourAnswer: "N/A", partnerAnswer: "N/A" };
             }
             if (ans.user_id === user.id) {
               acc[qId].yourAnswer = ans.answer;
