@@ -45,7 +45,10 @@ CREATE TABLE questions (
   is_active BOOLEAN DEFAULT true,
   release_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT questions_options_is_array CHECK (options IS NULL OR jsonb_typeof(options) = 'array'),
+  CONSTRAINT questions_scale_labels_is_object CHECK (scale_labels IS NULL OR jsonb_typeof(scale_labels) = 'object'),
+  CONSTRAINT questions_scale_min_le_max CHECK ((min_scale IS NULL AND max_scale IS NULL) OR (min_scale IS NOT NULL AND max_scale IS NOT NULL AND min_scale <= max_scale))
 );
 
 -- Couples table to store links between users
@@ -57,7 +60,7 @@ CREATE TABLE couples (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     -- Ensures that user1_id and user2_id pair is unique regardless of order
-    CONSTRAINT unique_couple_pair CHECK (user1_id < user2_id),
+    CONSTRAINT ordered_couple_pair CHECK (user2_id IS NULL OR user1_id < user2_id),
     UNIQUE (user1_id, user2_id)
 );
 
@@ -242,13 +245,13 @@ CREATE POLICY "Users can insert their own couple entries" ON couples
   FOR INSERT
   WITH CHECK (auth.uid() = user1_id);
 
-CREATE POLICY "Users can update couple entries to link themselves" ON couples
+CREATE POLICY "Users can update own pending couple entry" ON couples
   FOR UPDATE
   USING (
-    -- Allow user1 to update if user2 is null (e.g. change linking_code)
-    (auth.uid() = user1_id AND user2_id IS NULL) OR
-    -- Allow a user to accept an invitation by setting themselves as user2
-    (user2_id IS NULL AND auth.uid() != user1_id)
+    auth.uid() = user1_id AND user2_id IS NULL
+  )
+  WITH CHECK (
+    auth.uid() = user1_id AND user2_id IS NULL
   );
 
 CREATE POLICY "Users can delete couples they are part of" ON couples
@@ -269,7 +272,7 @@ BEGIN
     END LOOP;
     RETURN result;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public, pg_temp, auth;
 
 CREATE OR REPLACE FUNCTION create_couple_and_get_code()
 RETURNS TEXT AS $$
@@ -279,25 +282,17 @@ DECLARE
   code_exists BOOLEAN;
 BEGIN
   LOOP
-    -- 1. Generate a new code
     new_code := generate_linking_code();
-
-    -- 2. Check if the code already exists
-    SELECT EXISTS (SELECT 1 FROM couples WHERE linking_code = new_code) INTO code_exists;
-
-    -- 3. If it doesn't exist, we can exit the loop
-    IF NOT code_exists THEN
-      EXIT;
-    END IF;
+    SELECT EXISTS(SELECT 1 FROM couples WHERE linking_code = new_code) INTO code_exists;
+    EXIT WHEN NOT code_exists;
   END LOOP;
 
-  -- 4. Insert the guaranteed unique code
   INSERT INTO couples (user1_id, linking_code)
   VALUES (current_user_id, new_code);
-  
+
   RETURN new_code;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public, pg_temp, auth;
 
 CREATE OR REPLACE FUNCTION link_partner(p_linking_code TEXT)
 RETURNS UUID AS $$
@@ -322,24 +317,27 @@ BEGIN
     RAISE EXCEPTION 'You cannot link with yourself.';
   END IF;
 
-  -- Ensure canonical order (user1_id < user2_id) to use the UNIQUE constraint
   IF couple_record.user1_id > current_user_id THEN
-    -- This case is tricky. The original entry must be deleted and a new one created
-    -- to maintain the user1 < user2 constraint.
-    DELETE FROM couples WHERE id = couple_record.id;
-    INSERT INTO couples (user1_id, user2_id)
-    VALUES (current_user_id, couple_record.user1_id)
-    RETURNING id INTO couple_record.id;
-  ELSE
-    -- Update the existing record
+    -- First set user2_id, then user1_id to avoid CHECK constraint violation
     UPDATE couples
-    SET user2_id = current_user_id, linking_code = NULL -- Code is used, so remove it
+    SET user2_id = couple_record.user1_id
+    WHERE id = couple_record.id;
+    UPDATE couples
+    SET user1_id = current_user_id, linking_code = NULL
+    WHERE id = couple_record.id;
+  ELSE
+    UPDATE couples
+    SET user2_id = current_user_id, linking_code = NULL
+    WHERE id = couple_record.id;
+  END IF;
+    UPDATE couples
+    SET user2_id = current_user_id, linking_code = NULL
     WHERE id = couple_record.id;
   END IF;
 
   RETURN couple_record.id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp, auth;
 
 -- Function to get all couples for the currently authenticated user
 CREATE OR REPLACE FUNCTION get_my_couples()
@@ -357,4 +355,4 @@ BEGIN
     (c.user1_id = auth.uid() OR c.user2_id = auth.uid())
     AND c.user2_id IS NOT NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp, auth;

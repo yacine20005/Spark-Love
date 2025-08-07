@@ -42,3 +42,7 @@ yarn-error.*
 *SETUP.md
 GEMINI.md
 QWEN.md
+CRUSH.md
+
+# Crush local cache
+.crush/
