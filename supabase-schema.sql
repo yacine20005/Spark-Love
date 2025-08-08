@@ -352,3 +352,35 @@ BEGIN
     AND c.user2_id IS NOT NULL;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp, auth;
+
+-- Secure RPC to reset all answers for a couple in a given category
+CREATE OR REPLACE FUNCTION reset_couple_quiz_answers(p_couple_id UUID, p_category quiz_category)
+RETURNS INTEGER AS $$
+DECLARE
+  deleted_count INTEGER := 0;
+  is_member BOOLEAN := FALSE;
+BEGIN
+  -- Check that the caller is a member of the couple
+  SELECT TRUE INTO is_member
+  FROM couples
+  WHERE id = p_couple_id AND (user1_id = auth.uid() OR user2_id = auth.uid());
+
+  IF NOT is_member THEN
+    RAISE EXCEPTION 'Not authorized: you must be a member of the couple to reset answers for this couple.' USING ERRCODE = '42501';
+  END IF;
+
+  -- Delete answers for this couple limited to the specified category
+  DELETE FROM user_answers ua
+  USING questions q
+  WHERE ua.question_id = q.id
+    AND q.category = p_category
+    AND ua.couple_id = p_couple_id;
+
+  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp, auth;
+
+-- Optional: Allow execution by authenticated users (Supabase generally allows by default)
+-- REVOKE ALL ON FUNCTION reset_couple_quiz_answers(UUID, quiz_category) FROM PUBLIC;
+-- GRANT EXECUTE ON FUNCTION reset_couple_quiz_answers(UUID, quiz_category) TO authenticated;

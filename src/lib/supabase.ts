@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@env';
 import { QuizCategory } from '../types/quiz';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// SecureStore adapter to match Supabase storage interface
-const SecureStoreAdapter = {
-  getItem: (key: string) => SecureStore.getItemAsync(key),
-  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+// AsyncStorage adapter to match Supabase storage interface
+const AsyncStorageAdapter = {
+  getItem: (key: string) => AsyncStorage.getItem(key),
+  setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
+  removeItem: (key: string) => AsyncStorage.removeItem(key),
 };
 
 // Types for Supabase - updated for new schema
@@ -58,6 +58,14 @@ export type Database = {
         Args: { p_linking_code: string };
         Returns: string; // couple_id
       };
+      get_my_couples: {
+        Args: {};
+        Returns: Array<{ couple_id: string; partner_id: string; partner_email: string | null }>
+      };
+      reset_couple_quiz_answers: {
+        Args: { p_couple_id: string; p_category: QuizCategory };
+        Returns: number;
+      };
     };
   };
 };
@@ -68,8 +76,8 @@ export const supabase = createClient<Database>(
   SUPABASE_ANON_KEY,
   {
     auth: {
-      // Persist session securely in Expo apps
-      storage: SecureStoreAdapter,
+      // Persist session using AsyncStorage to avoid SecureStore size limits
+      storage: AsyncStorageAdapter,
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
@@ -443,6 +451,69 @@ export class QuizService {
 
     } catch (error) {
       console.error('💥 Erreur globale:', error);
+      throw error;
+    }
+  }
+
+  // Reset answers for a given category and context
+  // - Couple mode: call secure RPC to delete all answers for BOTH partners where couple_id matches
+  // - Solo mode: delete only current user's answers where couple_id IS NULL
+  static async resetQuizAnswers(category: QuizCategory, coupleId: string | null, userId: string) {
+    try {
+      if (coupleId) {
+        // Use secure RPC with SECURITY DEFINER to bypass RLS per-row user constraint while enforcing couple membership
+        const { data, error } = await supabase.rpc('reset_couple_quiz_answers', {
+          p_couple_id: coupleId,
+          p_category: category,
+        });
+        if (error) {
+          if (
+            error.code === '42501' || // Postgres insufficient privilege
+            error.message?.toLowerCase().includes('authorization') ||
+            error.message?.toLowerCase().includes('not authorized')
+          ) {
+            console.error('Authorization error when resetting couple quiz answers:', error);
+            throw new Error('You are not authorized to reset the answers for this couple.');
+          }
+          console.error('Error resetting couple quiz answers via RPC:', error);
+          throw error;
+        }
+        console.log(`🗑️ RPC reset_couple_quiz_answers deleted: ${data ?? 0}`);
+        return { deleted: data ?? 0 };
+      }
+
+      // Solo mode path: delete only this user's answers for the category where couple_id IS NULL
+      const { data: questions, error: qError } = await supabase
+        .from('questions')
+        .select('id')
+        .eq('category', category);
+
+      if (qError) {
+        console.error('Error fetching questions to reset (solo):', qError);
+        throw qError;
+      }
+
+      const questionIds = (questions || []).map(q => q.id);
+      if (questionIds.length === 0) return { deleted: 0 };
+
+      const { data: delData, error: dError } = await supabase
+        .from('user_answers')
+        .delete()
+        .in('question_id', questionIds)
+        .eq('user_id', userId)
+        .is('couple_id', null)
+        .select();
+
+      if (dError) {
+        console.error('Error deleting solo answers:', dError);
+        throw dError;
+      }
+
+      const count = delData?.length || 0;
+      console.log(`🗑️ Solo reset for ${category}. Deleted: ${count}`);
+      return { deleted: count };
+    } catch (error) {
+      console.error('Failed to reset quiz answers:', error);
       throw error;
     }
   }

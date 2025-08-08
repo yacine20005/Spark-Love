@@ -96,8 +96,14 @@ export const QuizScreen: React.FC = () => {
 
   const handleCategoryPress = (category: QuizCategory) => {
     setSelectedCategory(category);
-    // Navigate to questions screen for selected category
-    navigation.navigate("QuizQuestionsScreen", { category });
+    const progress = quizProgress[category] || 0;
+    if (progress >= 100) {
+      // Already completed: go to status screen (wait/compare/redo)
+      navigation.navigate("QuizStatusScreen", { category, coupleId: activeCouple?.id || null });
+    } else {
+      // Not completed: go to questions
+      navigation.navigate("QuizQuestionsScreen", { category });
+    }
   };
 
   const getAvailableCategories = () => {

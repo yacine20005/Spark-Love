@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Represents a couple link, including the partner's info
 export interface Couple {
@@ -51,9 +51,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const persistActiveCouple = useCallback(async (userId: string, couple: Couple | null) => {
     try {
       if (couple) {
-        await SecureStore.setItemAsync(activeCoupleKey(userId), couple.id);
+        await AsyncStorage.setItem(activeCoupleKey(userId), couple.id);
       } else {
-        await SecureStore.deleteItemAsync(activeCoupleKey(userId));
+        await AsyncStorage.removeItem(activeCoupleKey(userId));
       }
     } catch (e) {
       console.warn("Failed to persist activeCouple preference:", e);
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const restoreActiveCouple = useCallback(async (userId: string, availableCouples: Couple[]) => {
     try {
-      const storedId = await SecureStore.getItemAsync(activeCoupleKey(userId));
+      const storedId = await AsyncStorage.getItem(activeCoupleKey(userId));
       if (storedId) {
         const found = availableCouples.find(c => c.id === storedId) || null;
         if (found) {
@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
         // Stored couple not found anymore, cleanup
-        await SecureStore.deleteItemAsync(activeCoupleKey(userId));
+        await AsyncStorage.removeItem(activeCoupleKey(userId));
       }
       // Default to Solo mode if nothing stored or invalid
       setActiveCoupleState(null);
@@ -150,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setCouples([]);
           setActiveCoupleState(null);
           if (prevUserId) {
-            try { await SecureStore.deleteItemAsync(activeCoupleKey(prevUserId)); } catch (e) { console.warn("Failed to delete activeCouple preference on sign out:", e); }
+            try { await AsyncStorage.removeItem(activeCoupleKey(prevUserId)); } catch (e) { console.warn("Failed to delete activeCouple preference on sign out:", e); }
           }
         }
       }

@@ -7,6 +7,7 @@ import { QuizScreen } from '../screens/QuizScreen';
 import { QuizQuestionsScreen } from '../screens/QuizQuestionsScreen';
 import { QuizCompletionScreen } from '../screens/QuizCompletionScreen';
 import { ComparisonScreen } from '../screens/ComparisonScreen'; // Import new screen
+import { QuizStatusScreen } from '../screens/QuizStatusScreen'; // New status screen
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../types/navigation';
 
@@ -29,6 +30,7 @@ export const RootNavigator: React.FC = () => {
             <Stack.Screen name="QuizQuestionsScreen" component={QuizQuestionsScreen} />
             <Stack.Screen name="QuizCompletionScreen" component={QuizCompletionScreen} />
             <Stack.Screen name="ComparisonScreen" component={ComparisonScreen} />
+            <Stack.Screen name="QuizStatusScreen" component={QuizStatusScreen} />
           </>
         ) : (
           <Stack.Screen name="AuthScreen" component={AuthScreen} />

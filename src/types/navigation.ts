@@ -17,6 +17,10 @@ export type RootStackParamList = {
     categoryId: QuizCategory;
     coupleId: string;
   };
+  QuizStatusScreen: { // New screen to show status/wait/compare and redo option
+    category: QuizCategory;
+    coupleId: string | null;
+  };
   ProfileScreen: undefined;
 };
 
@@ -52,4 +56,4 @@ export interface TabScreenProps<T extends keyof MainTabParamList> {
 }
 
 // For screens that don't need navigation props
-export type ScreenComponent<T> = React.FC<T>; 
+export type ScreenComponent<T> = React.FC<T>;
