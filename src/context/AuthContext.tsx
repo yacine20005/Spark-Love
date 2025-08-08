@@ -1,6 +1,13 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
+import { Session, User } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
+import * as SecureStore from "expo-secure-store";
 
 // Represents a couple link, including the partner's info
 export interface Couple {
@@ -27,15 +34,51 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const activeCoupleKey = (userId: string) => `sparklove_active_couple_${userId}`;
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   // New state for couples
   const [couples, setCouples] = useState<Couple[]>([]);
-  const [activeCouple, setActiveCouple] = useState<Couple | null>(null);
+  const [activeCouple, setActiveCoupleState] = useState<Couple | null>(null);
   const [loadingCouples, setLoadingCouples] = useState(true);
+
+  const persistActiveCouple = useCallback(async (userId: string, couple: Couple | null) => {
+    try {
+      if (couple) {
+        await SecureStore.setItemAsync(activeCoupleKey(userId), couple.id);
+      } else {
+        await SecureStore.deleteItemAsync(activeCoupleKey(userId));
+      }
+    } catch (e) {
+      console.warn("Failed to persist activeCouple preference:", e);
+    }
+  }, []);
+
+  const restoreActiveCouple = useCallback(async (userId: string, availableCouples: Couple[]) => {
+    try {
+      const storedId = await SecureStore.getItemAsync(activeCoupleKey(userId));
+      if (storedId) {
+        const found = availableCouples.find(c => c.id === storedId) || null;
+        if (found) {
+          setActiveCoupleState(found);
+          return;
+        }
+        // Stored couple not found anymore, cleanup
+        await SecureStore.deleteItemAsync(activeCoupleKey(userId));
+      }
+      // Default to Solo mode if nothing stored or invalid
+      setActiveCoupleState(null);
+    } catch (e) {
+      console.warn("Failed to restore activeCouple preference:", e);
+      setActiveCoupleState(null);
+    }
+  }, []);
 
   const fetchCouples = useCallback(async (currentUser: User) => {
     if (!currentUser) return;
@@ -43,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoadingCouples(true);
     try {
       // Call the new, secure RPC function to get couple data
-      const { data, error } = await supabase.rpc('get_my_couples');
+      const { data, error } = await supabase.rpc("get_my_couples");
 
       if (error) throw error;
 
@@ -56,18 +99,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
 
       setCouples(fetchedCouples);
+
+      // Restore selection based on SecureStore
+      await restoreActiveCouple(currentUser.id, fetchedCouples);
     } catch (e) {
       console.error("Failed to fetch couples:", e);
       setCouples([]); // Clear couples on error
+      // Even if couples failed, keep Solo mode
+      setActiveCoupleState(null);
     } finally {
       setLoadingCouples(false);
     }
-  }, []);
+  }, [restoreActiveCouple]);
+
+  // Wrap setter to persist selection
+  const setActiveCouple = useCallback((couple: Couple | null) => {
+    setActiveCoupleState(couple);
+    if (user) {
+      // Fire and forget persist
+      void persistActiveCouple(user.id, couple);
+    }
+  }, [persistActiveCouple, user]);
 
   // Effect to get the initial session
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -78,22 +137,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getSession();
 
     // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchCouples(session.user);
-      } else {
-        // Clear couple data on sign out
-        setCouples([]);
-        setActiveCouple(null);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        // Capture previous user id for cleanup when signing out
+        const prevUserId = user?.id;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchCouples(session.user);
+        } else {
+          // Clear couple data on sign out and remove persisted selection
+          setCouples([]);
+          setActiveCoupleState(null);
+          if (prevUserId) {
+            try { await SecureStore.deleteItemAsync(activeCoupleKey(prevUserId)); } catch (e) { console.warn("Failed to delete activeCouple preference on sign out:", e); }
+          }
+        }
       }
-    });
+    );
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [fetchCouples]);
+  }, [fetchCouples, user?.id]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -106,17 +172,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        session, 
-        user, 
-        loading, 
+    <AuthContext.Provider
+      value={{
+        session,
+        user,
+        loading,
         signOut,
         couples,
         activeCouple,
         loadingCouples,
         setActiveCouple,
-        refreshCouples
+        refreshCouples,
       }}
     >
       {children}
@@ -127,7 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

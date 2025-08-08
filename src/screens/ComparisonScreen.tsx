@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,17 +6,20 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
-} from 'react-native';
-import { RouteProp } from '@react-navigation/native';
-import { RootStackParamList } from '../types/navigation';
-import { QuizService } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
-import { GlassCard } from '../components/GlassCard';
-import { COLORS, FONTS, SPACING, OPACITY } from '../constants';
+} from "react-native";
+import { RouteProp } from "@react-navigation/native";
+import { RootStackParamList } from "../types/navigation";
+import { QuizService } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext";
+import { GlassCard } from "../components/GlassCard";
+import { COLORS, FONTS, SPACING, OPACITY } from "../constants";
 
-import { Answer, Question } from '../types/quiz';
+import { Answer, Question } from "../types/quiz";
 
-type ComparisonScreenRouteProp = RouteProp<RootStackParamList, 'ComparisonScreen'>;
+type ComparisonScreenRouteProp = RouteProp<
+  RootStackParamList,
+  "ComparisonScreen"
+>;
 
 interface ComparisonScreenProps {
   route: ComparisonScreenRouteProp;
@@ -34,7 +37,9 @@ interface AnswerWithQuestion {
   question: Question;
 }
 
-export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({ route }) => {
+export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
+  route,
+}) => {
   const { categoryId, coupleId } = route.params;
   const { user, activeCouple } = useAuth();
   const [comparison, setComparison] = useState<ComparisonData[]>([]);
@@ -47,14 +52,19 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({ route }) => 
 
       try {
         setLoading(true);
-        const answers: AnswerWithQuestion[] | null = await QuizService.getComparisonAnswers(coupleId, categoryId);
+        const answers: AnswerWithQuestion[] | null =
+          await QuizService.getComparisonAnswers(coupleId, categoryId);
         if (answers) {
           const partnerId = activeCouple.partner.id;
 
           const groupedByQuestion = answers.reduce((acc, ans) => {
             const qId = ans.question.id;
             if (!acc[qId]) {
-              acc[qId] = { questionText: ans.question.text, yourAnswer: "N/A", partnerAnswer: "N/A" };
+              acc[qId] = {
+                questionText: ans.question.text,
+                yourAnswer: "N/A",
+                partnerAnswer: "N/A",
+              };
             }
             if (ans.user_id === user.id) {
               acc[qId].yourAnswer = ans.answer;
@@ -67,7 +77,7 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({ route }) => 
           setComparison(Object.values(groupedByQuestion));
         }
       } catch (err) {
-        setError('Failed to load comparison. Please try again.');
+        setError("Failed to load comparison. Please try again.");
         console.error(err);
       } finally {
         setLoading(false);
@@ -120,7 +130,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   content: {
     padding: SPACING.lg,
@@ -128,13 +138,13 @@ const styles = StyleSheet.create({
   title: {
     ...FONTS.largeTitle,
     color: COLORS.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: SPACING.sm,
   },
   subtitle: {
     ...FONTS.h2,
     color: COLORS.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: SPACING.xl,
   },
   card: {
@@ -147,13 +157,13 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   answerContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: SPACING.sm,
   },
   answerLabel: {
     ...FONTS.body1,
     color: COLORS.primary,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginRight: SPACING.sm,
   },
   answerText: {
@@ -163,7 +173,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...FONTS.body1,
-    color: 'red',
-    textAlign: 'center',
+    color: "red",
+    textAlign: "center",
   },
 });

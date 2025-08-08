@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -8,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 type ModalContent = 'options' | 'enterCode' | 'generateCode';
 
 export const usePartnerLinking = () => {
-  const { refreshCouples } = useAuth();
+  const { refreshCouples, user } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState<ModalContent>('options');
   const [linkingCode, setLinkingCode] = useState('');
@@ -41,6 +40,21 @@ export const usePartnerLinking = () => {
   const handleLinkPartner = async () => {
     const cleanCode = linkingCode.trim().toUpperCase();
     if (!cleanCode) return;
+
+    // Prevent self-link on the client when the user tries to use their own freshly generated code
+    if (generatedCode && cleanCode === generatedCode) {
+      Alert.alert(
+        'Oops!',
+        "It's great to love yourself, but solo mode is here for that 😉"
+      );
+      return;
+    }
+
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to link a partner.');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await supabase.rpc('link_partner', { p_linking_code: cleanCode });
