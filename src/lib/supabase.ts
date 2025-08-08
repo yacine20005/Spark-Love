@@ -66,6 +66,10 @@ export type Database = {
         Args: { p_couple_id: string; p_category: QuizCategory };
         Returns: number;
       };
+      is_quiz_completed_by_both_partners: {
+        Args: { p_couple_id: string; p_category: QuizCategory };
+        Returns: boolean;
+      };
     };
   };
 };
@@ -147,6 +151,7 @@ export class QuizService {
 
   // Get answers for comparison
   static async getComparisonAnswers(coupleId: string, categoryId: QuizCategory) {
+    // Direct client query (requires RLS disabled or permissive policy)
     const { data, error } = await supabase
       .from('user_answers')
       .select(`
@@ -155,7 +160,9 @@ export class QuizService {
         question:questions (*)
       `)
       .eq('couple_id', coupleId)
-      .eq('question.category', categoryId);
+      .eq('question.category', categoryId)
+      .eq('question.is_active', true)
+      .lte('question.release_date', new Date().toISOString());
 
     if (error) {
       console.error('Error fetching comparison answers:', error);
@@ -198,12 +205,6 @@ export class QuizService {
         // Extract question IDs
         const questionIds = activeQuestions.map(q => q.id);
 
-        // If no questions are available, progress is 0
-        if (questionIds.length === 0) {
-          progress[category] = 0;
-          continue;
-        }
-
         // Count questions answered by this user for this context
         let answersQuery = supabase
           .from('user_answers')
@@ -211,7 +212,7 @@ export class QuizService {
           .eq('user_id', userId)
           .in('question_id', questionIds);
 
-                // Handle couple_id null differently to avoid Supabase errors
+        // Handle couple_id null differently to avoid Supabase errors
         if (coupleId === null) {
           answersQuery = answersQuery.is('couple_id', null);
         } else {
@@ -242,7 +243,7 @@ export class QuizService {
   // Check if a quiz is completed by both partners of a couple
   static async isQuizCompletedByBothPartners(coupleId: string, category: QuizCategory) {
     try {
-      // Get couple information
+      // Client-side check (requires visibility on partner answers)
       const { data: coupleData, error: coupleError } = await supabase
         .from('couples')
         .select('user1_id, user2_id')
@@ -253,7 +254,6 @@ export class QuizService {
         return false; // Couple doesn't exist or is not complete
       }
 
-      // Get all active questions for this category
       const { data: activeQuestions, error: questionsError } = await supabase
         .from('questions')
         .select('id')
@@ -272,28 +272,27 @@ export class QuizService {
         return true; // No questions = completed
       }
 
-      // Check answers for user1
-      const { count: user1Answers, error: user1Error } = await supabase
+      const { data: answersRows, error: answersError } = await supabase
         .from('user_answers')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', coupleData.user1_id)
+        .select('user_id, question_id')
         .eq('couple_id', coupleId)
-        .in('question_id', questionIds);
+        .in('question_id', questionIds)
+        .in('user_id', [coupleData.user1_id, coupleData.user2_id]);
 
-      // Check answers for user2
-      const { count: user2Answers, error: user2Error } = await supabase
-        .from('user_answers')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', coupleData.user2_id)
-        .eq('couple_id', coupleId)
-        .in('question_id', questionIds);
-
-      if (user1Error || user2Error) {
+      if (answersError) {
         return false;
       }
 
-      // Have both partners answered all questions?
-      return (user1Answers || 0) === totalQuestions && (user2Answers || 0) === totalQuestions;
+      const user1Set = new Set<string>();
+      const user2Set = new Set<string>();
+      for (const row of answersRows || []) {
+        if (row.user_id === coupleData.user1_id) user1Set.add(row.question_id as string);
+        if (row.user_id === coupleData.user2_id && typeof row.question_id === 'string' && row.question_id) {
+          user2Set.add(row.question_id);
+        }
+      }
+
+      return user1Set.size === totalQuestions && user2Set.size === totalQuestions;
     } catch (error) {
       console.error('Error checking if quiz is completed by both partners:', error);
       return false;
@@ -461,25 +460,35 @@ export class QuizService {
   static async resetQuizAnswers(category: QuizCategory, coupleId: string | null, userId: string) {
     try {
       if (coupleId) {
-        // Use secure RPC with SECURITY DEFINER to bypass RLS per-row user constraint while enforcing couple membership
-        const { data, error } = await supabase.rpc('reset_couple_quiz_answers', {
-          p_couple_id: coupleId,
-          p_category: category,
-        });
-        if (error) {
-          if (
-            error.code === '42501' || // Postgres insufficient privilege
-            error.message?.toLowerCase().includes('authorization') ||
-            error.message?.toLowerCase().includes('not authorized')
-          ) {
-            console.error('Authorization error when resetting couple quiz answers:', error);
-            throw new Error('You are not authorized to reset the answers for this couple.');
-          }
-          console.error('Error resetting couple quiz answers via RPC:', error);
-          throw error;
+        // Direct delete for couple mode (security disabled)
+        const { data: questions, error: qError } = await supabase
+          .from('questions')
+          .select('id')
+          .eq('category', category);
+
+        if (qError) {
+          console.error('Error fetching questions to reset (couple):', qError);
+          throw qError;
         }
-        console.log(`🗑️ RPC reset_couple_quiz_answers deleted: ${data ?? 0}`);
-        return { deleted: data ?? 0 };
+
+        const questionIds = (questions || []).map(q => q.id);
+        if (questionIds.length === 0) return { deleted: 0 };
+
+        const { data: delData, error: dError } = await supabase
+          .from('user_answers')
+          .delete()
+          .in('question_id', questionIds)
+          .eq('couple_id', coupleId)
+          .select();
+
+        if (dError) {
+          console.error('Error deleting couple answers:', dError);
+          throw dError;
+        }
+
+        const count = delData?.length || 0;
+        console.log(`🗑️ Couple reset for ${category}. Deleted: ${count}`);
+        return { deleted: count };
       }
 
       // Solo mode path: delete only this user's answers for the category where couple_id IS NULL

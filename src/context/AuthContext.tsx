@@ -85,16 +85,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setLoadingCouples(true);
     try {
-      // Call the new, secure RPC function to get couple data
-      const { data, error } = await supabase.rpc("get_my_couples");
+      // Direct query on couples table (no RPC, no join with auth.users)
+      const { data, error } = await supabase
+        .from('couples')
+        .select('id, user1_id, user2_id')
+        .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
+        .not('user2_id', 'is', null);
 
       if (error) throw error;
 
-      const fetchedCouples: Couple[] = data.map((c: any) => ({
-        id: c.couple_id,
+      const fetchedCouples: Couple[] = (data || []).map((c: any) => ({
+        id: c.id,
         partner: {
-          id: c.partner_id,
-          email: c.partner_email,
+          id: c.user1_id === currentUser.id ? c.user2_id : c.user1_id,
+          // email not available without RPC or join; set as empty string
         },
       }));
 

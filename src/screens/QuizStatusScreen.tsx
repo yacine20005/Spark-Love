@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { View, Text, StyleSheet, SafeAreaView, StatusBar, Alert } from "react-native";
 import { RouteProp, useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -74,6 +74,13 @@ export const QuizStatusScreen: React.FC<Props> = ({ route }) => {
       ]
     );
   }, [isCouple, user, category, coupleId, navigation]);
+
+  // Auto-redirect to comparison when both partners have completed the quiz
+  useEffect(() => {
+    if (!loading && isCouple && bothCompleted && canCompare && coupleId) {
+      navigation.replace("ComparisonScreen", { categoryId: category, coupleId });
+    }
+  }, [loading, isCouple, bothCompleted, canCompare, coupleId, category, navigation]);
 
   return (
     <SafeAreaView style={styles.container}>

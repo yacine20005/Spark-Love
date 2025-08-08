@@ -31,11 +31,14 @@ interface ComparisonData {
   partnerAnswer: string | number;
 }
 
-interface AnswerWithQuestion {
-  answer: string | number;
+// Types souples pour supporter RPC ou jointure client
+type AnyAnswerRow = {
   user_id: string;
-  question: Question;
-}
+  answer: string | number;
+  question?: Question; // présent avec la jointure client
+  question_id?: string; // présent avec la RPC
+  question_text?: string; // présent avec la RPC
+};
 
 export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
   route,
@@ -52,19 +55,20 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
 
       try {
         setLoading(true);
-        const answers: AnswerWithQuestion[] | null =
-          await QuizService.getComparisonAnswers(coupleId, categoryId);
-        if (answers) {
+        const rows: AnyAnswerRow[] = await QuizService.getComparisonAnswers(coupleId, categoryId);
+        if (rows && Array.isArray(rows)) {
           const partnerId = activeCouple.partner.id;
 
-          const groupedByQuestion = answers.reduce((acc, ans) => {
-            const qId = ans.question.id;
+          const groupedByQuestion = rows.reduce((acc, ans) => {
+            const qJoined = Array.isArray(ans.question) ? ans.question[0] : ans.question;
+            const qId = ans.question_id ?? qJoined?.id ?? 'unknown';
+            const qText = ans.question_text ?? qJoined?.text ?? '';
             if (!acc[qId]) {
               acc[qId] = {
-                questionText: ans.question.text,
-                yourAnswer: "N/A",
-                partnerAnswer: "N/A",
-              };
+                questionText: qText,
+                yourAnswer: 'N/A',
+                partnerAnswer: 'N/A',
+              } as ComparisonData;
             }
             if (ans.user_id === user.id) {
               acc[qId].yourAnswer = ans.answer;
@@ -77,7 +81,7 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
           setComparison(Object.values(groupedByQuestion));
         }
       } catch (err) {
-        setError("Failed to load comparison. Please try again.");
+        setError('Failed to load comparison. Please try again.');
         console.error(err);
       } finally {
         setLoading(false);
