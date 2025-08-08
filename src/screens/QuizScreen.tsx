@@ -15,8 +15,9 @@ import { GradientButton } from "../components/GradientButton";
 import { QuizCategory } from "../types/quiz";
 import { QUIZ_CATEGORIES, QUIZ_SETTINGS } from "../constants";
 import { useNavigation } from "@react-navigation/native";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { MainTabParamList } from "../types/navigation";
+import { NavigationProp } from "../types/navigation";
+import { useAuth } from "../context/AuthContext";
+import { QuizService } from "../lib/supabase";
 import {
   COLORS,
   FONTS,
@@ -30,7 +31,8 @@ import {
 const { width } = Dimensions.get("window");
 
 export const QuizScreen: React.FC = () => {
-  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
+  const navigation = useNavigation<NavigationProp>();
+  const { user, activeCouple, loading: authLoading } = useAuth();
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState<QuizCategory | null>(
     null
@@ -49,28 +51,52 @@ export const QuizScreen: React.FC = () => {
     [QuizCategory.DATES]: 0,
     [QuizCategory.PERSONALITY]: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data for development
+  // Load quiz progress based on active couple or solo mode
+  const loadQuizProgress = async () => {
+    if (!user || authLoading) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Debug: Get diagnostic information
+      const diagnosticInfo = await QuizService.getDiagnosticInfo();
+      console.log("Database diagnostic info:", diagnosticInfo);
+
+      // If no questions exist, stop here with an info message
+      if (diagnosticInfo && diagnosticInfo.totalQuestions === 0) {
+        setError(
+          "No questions are available in the database. Please contact the administrator."
+        );
+        return;
+      }
+
+      // Get progress for active couple (or solo mode if activeCouple is null)
+      const progress = await QuizService.getQuizProgress(
+        user.id,
+        activeCouple?.id || null
+      );
+      setQuizProgress(progress);
+    } catch (err) {
+      console.error("Error loading progress:", err);
+      setError(
+        "Unable to load quiz progress. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Simulate loading quiz progress
-    const mockProgress = {
-      [QuizCategory.COMMUNICATION]: 75,
-      [QuizCategory.VALUES]: 30,
-      [QuizCategory.HOBBIES]: 0,
-      [QuizCategory.INTIMACY]: 0,
-      [QuizCategory.FAMILY]: 0,
-      [QuizCategory.FUTURE]: 0,
-      [QuizCategory.ACTIVITIES]: 0,
-      [QuizCategory.PHYSICAL]: 0,
-      [QuizCategory.DATES]: 0,
-      [QuizCategory.PERSONALITY]: 0,
-    };
-    setQuizProgress(mockProgress);
-  }, []);
+    loadQuizProgress();
+  }, [user, activeCouple, authLoading]);
 
   const handleCategoryPress = (category: QuizCategory) => {
     setSelectedCategory(category);
-    // Navigation to the questions screen for the selected category
+    // Navigate to questions screen for selected category
     navigation.navigate("QuizQuestionsScreen", { category });
   };
 
@@ -108,53 +134,88 @@ export const QuizScreen: React.FC = () => {
           <GlassCard style={styles.headerCard} opacity={OPACITY.glass}>
             <Text style={styles.title}>Quiz Categories</Text>
             <Text style={styles.subtitle}>
-              Choose a category to start discovering each other
+              {activeCouple
+                ? `Couple mode with ${
+                    activeCouple.partner.email || "your partner"
+                  }`
+                : "Solo mode - Discover yourself!"}
             </Text>
           </GlassCard>
         </View>
 
+        {/* Loading or error indicator */}
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <GlassCard style={styles.messageCard} opacity={OPACITY.glass}>
+              <Text style={styles.loadingText}>Loading progress...</Text>
+            </GlassCard>
+          </View>
+        )}
+
+        {error && (
+          <View style={styles.errorContainer}>
+            <GlassCard style={styles.messageCard} opacity={OPACITY.glass}>
+              <Text style={styles.errorText}>{error}</Text>
+              <GradientButton
+                title="Try Again"
+                onPress={() => {
+                  setError(null);
+                  // Re-trigger useEffect by updating a dependency
+                  loadQuizProgress();
+                }}
+                style={styles.retryButton}
+              />
+            </GlassCard>
+          </View>
+        )}
+
         {/* Quick Stats */}
-        <View style={styles.statsSection}>
-          <GlassCard style={styles.statsCard} opacity={OPACITY.glass}>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>
-                  {Object.values(quizProgress).filter((p) => p > 0).length}
-                </Text>
-                <Text style={styles.statLabel}>Categories Started</Text>
+        {!loading && !error && (
+          <View style={styles.statsSection}>
+            <GlassCard style={styles.statsCard} opacity={OPACITY.glass}>
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>
+                    {Object.values(quizProgress).filter((p) => p > 0).length}
+                  </Text>
+                  <Text style={styles.statLabel}>Categories Started</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>
+                    {Math.round(
+                      Object.values(quizProgress).reduce((a, b) => a + b, 0) /
+                        Object.keys(quizProgress).length
+                    )}
+                    %
+                  </Text>
+                  <Text style={styles.statLabel}>Average Progress</Text>
+                </View>
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>
-                  {Math.round(
-                    Object.values(quizProgress).reduce((a, b) => a + b, 0) /
-                      Object.keys(quizProgress).length
-                  )}
-                </Text>
-                <Text style={styles.statLabel}>Average Progress</Text>
-              </View>
-            </View>
-          </GlassCard>
-        </View>
+            </GlassCard>
+          </View>
+        )}
 
         {/* Categories Grid */}
-        <View style={styles.categoriesSection}>
-          <Text style={styles.sectionTitle}>Available Categories</Text>
-          <View style={styles.categoriesGrid}>
-            {availableCategories.map((category) => (
-              <QuizCard
-                key={category}
-                category={category}
-                onPress={() => handleCategoryPress(category)}
-                progress={quizProgress[category]}
-                questionCount={QUIZ_SETTINGS.QUESTIONS_PER_QUIZ}
-              />
-            ))}
+        {!loading && !error && (
+          <View style={styles.categoriesSection}>
+            <Text style={styles.sectionTitle}>Available Categories</Text>
+            <View style={styles.categoriesGrid}>
+              {availableCategories.map((category) => (
+                <QuizCard
+                  key={category}
+                  category={category}
+                  onPress={() => handleCategoryPress(category)}
+                  progress={quizProgress[category]}
+                  questionCount={QUIZ_SETTINGS.QUESTIONS_PER_QUIZ}
+                />
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Locked Categories */}
-        {lockedCategories.length > 0 && (
+        {!loading && !error && lockedCategories.length > 0 && (
           <View style={styles.categoriesSection}>
             <Text style={styles.sectionTitle}>Coming Soon</Text>
             <View style={styles.categoriesGrid}>
@@ -264,5 +325,32 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: SPACING.xl,
+  },
+  loadingContainer: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.xl,
+  },
+  errorContainer: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.xl,
+  },
+  messageCard: {
+    paddingVertical: SPACING.lg,
+    alignItems: "center",
+  },
+  loadingText: {
+    ...FONTS.body1,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+  },
+  errorText: {
+    ...FONTS.body1,
+    color: COLORS.error || COLORS.textSecondary,
+    textAlign: "center",
+    marginBottom: SPACING.md,
+  },
+  retryButton: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
   },
 });

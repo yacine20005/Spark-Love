@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      const fetchedCouples: Couple[] = data.map(c => ({
+      const fetchedCouples: Couple[] = data.map((c: any) => ({
         id: c.couple_id,
         partner: {
           id: c.partner_id,

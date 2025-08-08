@@ -46,11 +46,16 @@ export const useQuiz = (category: QuizCategory) => {
     }
   }, [question]);
 
-  const handleAnswer = (answer: any) => {
+  const handleAnswer = async (answer: any) => {
+    if (!user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
     const newAnswer: Answer = {
       question_id: question.id,
       answer,
-      user_id: user?.id,
+      user_id: user.id,
       couple_id: activeCouple?.id || null,
     };
 
@@ -61,9 +66,53 @@ export const useQuiz = (category: QuizCategory) => {
     if (!isLast) {
       setCurrent((c) => c + 1);
     } else {
+      // Quiz completed - save all answers
+      console.log('🎯 Quiz completed, saving answers...');
+      
+      try {
+        await QuizService.saveAnswers(newAnswers.map(ans => ({
+          question_id: ans.question_id,
+          answer: ans.answer,
+          user_id: ans.user_id!,
+          couple_id: ans.couple_id || null,
+        })));
+        
+        console.log('✅ Answers saved successfully');
+      } catch (err) {
+        console.error('❌ Error saving answers:', err);
+      }
+      
+      // Navigate to completion screen with saved answers
       navigation.replace("QuizCompletionScreen", {
         category,
         answers: newAnswers,
+        coupleId: activeCouple?.id || null,
+      });
+    }
+  };
+
+  const saveQuizAnswers = async (finalAnswers: Answer[]) => {
+    try {
+      // Sauvegarder toutes les réponses en une fois
+      await QuizService.saveAnswers(finalAnswers.map(ans => ({
+        question_id: ans.question_id,
+        answer: ans.answer,
+        user_id: ans.user_id!,
+        couple_id: ans.couple_id || null,
+      })));
+
+      // Naviguer vers l'écran de completion
+      navigation.replace("QuizCompletionScreen", {
+        category,
+        answers: finalAnswers,
+        coupleId: activeCouple?.id || null,
+      });
+    } catch (err) {
+      console.error('Error saving quiz answers:', err);
+      // Même en cas d'erreur, on navigue quand même (on pourra retry plus tard)
+      navigation.replace("QuizCompletionScreen", {
+        category,
+        answers: finalAnswers,
         coupleId: activeCouple?.id || null,
       });
     }
@@ -81,5 +130,6 @@ export const useQuiz = (category: QuizCategory) => {
     setTextInput,
     scaleValue,
     setScaleValue,
+    saveQuizAnswers,
   };
 };

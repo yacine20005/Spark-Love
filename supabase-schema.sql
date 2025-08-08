@@ -330,10 +330,6 @@ BEGIN
     SET user2_id = current_user_id, linking_code = NULL
     WHERE id = couple_record.id;
   END IF;
-    UPDATE couples
-    SET user2_id = current_user_id, linking_code = NULL
-    WHERE id = couple_record.id;
-  END IF;
 
   RETURN couple_record.id;
 END;

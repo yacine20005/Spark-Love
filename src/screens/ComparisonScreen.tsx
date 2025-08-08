@@ -24,11 +24,13 @@ interface ComparisonScreenProps {
 
 interface ComparisonData {
   questionText: string;
-  yourAnswer: string;
-  partnerAnswer: string;
+  yourAnswer: string | number;
+  partnerAnswer: string | number;
 }
 
-interface AnswerWithQuestion extends Answer {
+interface AnswerWithQuestion {
+  answer: string | number;
+  user_id: string;
   question: Question;
 }
 

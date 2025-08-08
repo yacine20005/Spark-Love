@@ -46,3 +46,6 @@ CRUSH.md
 
 # Crush local cache
 .crush/
+
+# Github local files
+.github/

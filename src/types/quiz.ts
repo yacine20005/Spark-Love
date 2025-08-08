@@ -48,6 +48,14 @@ export interface UserAnswer {
   created_at: string;
 }
 
+// Interface pour les réponses en cours de saisie (avant sauvegarde)
+export interface Answer {
+  question_id: string;
+  answer: string | number;
+  user_id?: string;
+  couple_id?: string | null;
+}
+
 // Quiz Session Interface
 export interface QuizSession {
   id: string;
