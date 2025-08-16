@@ -1,10 +1,6 @@
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  useCallback,
-} from "react";
+import React from "react";
+import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import type { ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -36,9 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const activeCoupleKey = (userId: string) => `sparklove_active_couple_${userId}`;
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
