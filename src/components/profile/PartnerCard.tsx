@@ -56,7 +56,7 @@ export const PartnerCard: React.FC<PartnerCardProps> = ({ onLinkPartner }) => {
                       {activeCouple?.id === couple.id && <View style={styles.indicatorInner} />}
                     </View>
                   </View>
-                  <Text style={styles.coupleText}>{couple.partner.email}</Text>
+                  <Text style={styles.coupleText}>{couple.partner.first_name || `Partner (${couple.partner.id.substring(0, 6)})`}</Text>
                 </TouchableOpacity>
               ))}
             </View>

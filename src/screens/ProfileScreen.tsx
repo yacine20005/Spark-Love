@@ -14,11 +14,12 @@ import { COLORS, FONTS, SPACING, OPACITY } from '../constants';
 import { usePartnerLinking } from '../hooks/usePartnerLinking';
 import { PartnerLinkingModal } from '../components/profile/PartnerLinkingModal';
 import { PartnerCard } from '../components/profile/PartnerCard';
-import { UserCard } from '../components/profile/UserCard';
+import { ProfileForm } from '../components/profile/ProfileForm';
+import { GradientButton } from '../components/GradientButton';
 
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { signOut } = useAuth();
   const { modalVisible, setModalVisible, openModal } = usePartnerLinking();
 
   return (
@@ -32,9 +33,12 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.subtitle}>Manage your account and preferences 👤</Text>
         </GlassCard>
 
+        <ProfileForm />
+
         <PartnerCard onLinkPartner={openModal} />
 
-        <UserCard />
+        <GradientButton title="Sign Out" onPress={signOut} style={{ marginTop: SPACING.lg }} />
+
       </ScrollView>
 
       <PartnerLinkingModal visible={modalVisible} onClose={() => setModalVisible(false)} />

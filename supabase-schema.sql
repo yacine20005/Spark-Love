@@ -1,6 +1,7 @@
 -- Drop existing tables and types to allow for a clean re-run
 DROP TABLE IF EXISTS "user_answers" CASCADE;
 DROP TABLE IF EXISTS "couples" CASCADE;
+DROP TABLE IF EXISTS "profiles" CASCADE;
 DROP TABLE IF EXISTS "questions" CASCADE;
 DROP TYPE IF EXISTS "quiz_category" CASCADE;
 DROP TYPE IF EXISTS "question_type" CASCADE;
@@ -30,6 +31,15 @@ CREATE TYPE question_type AS ENUM (
   'scale',
   'text',
   'yes_no'
+);
+
+-- Profiles table to store public user data
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  first_name TEXT,
+  last_name TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Questions table (no changes here)
@@ -99,6 +109,24 @@ CREATE TRIGGER update_questions_updated_at BEFORE UPDATE ON questions
 
 CREATE TRIGGER update_couples_updated_at BEFORE UPDATE ON couples
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- This trigger automatically creates a profile entry for new users.
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id)
+  VALUES (new.id);
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
 
 -- Insert sample questions (keeping the existing ones)
 INSERT INTO questions (text, category, type, options, min_scale, max_scale, scale_labels, release_date) VALUES
@@ -226,7 +254,4 @@ INSERT INTO questions (text, category, type, options, min_scale, max_scale, scal
 ALTER TABLE questions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE user_answers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE couples DISABLE ROW LEVEL SECURITY;
-
--- NOTE: All previous policies and SQL functions (RPCs) have been removed intentionally for development simplicity.
--- This includes: generate_linking_code, create_couple_and_get_code, link_partner, get_my_couples,
--- reset_couple_quiz_answers, is_quiz_completed_by_both_partners, get_couple_comparison_answers, and all RLS policies.
+ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
