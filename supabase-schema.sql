@@ -113,6 +113,8 @@ CREATE TRIGGER update_couples_updated_at BEFORE UPDATE ON couples
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 -- This trigger automatically creates a profile entry for new users.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$

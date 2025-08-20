@@ -2,39 +2,12 @@ import React, { createContext, useState, useEffect, useContext, useCallback, Rea
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// Represents a user's public profile
-export interface Profile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-}
-
-// Represents a couple link, including the partner's info
-export interface Couple {
-  id: string; // The ID of the couple entry
-  partner: Profile & { email?: string };
-}
-
-interface AuthContextType {
-  session: Session | null;
-  user: User | null;
-  profile: Profile | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-  // New state for couple management
-  couples: Couple[];
-  activeCouple: Couple | null; // null means solo mode
-  loadingCouples: boolean;
-  setActiveCouple: (couple: Couple | null) => void;
-  refreshCouples: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
-}
+import { Profile, Couple, AuthContextType } from '../types/auth';
+import { AuthService } from "../api/authService";
+import { ProfileService } from "../api/profileService";
+import { PartnerService } from "../api/partnerService";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Supabase/PostgREST error code for "row not found"
-const POSTGREST_NOT_FOUND_ERROR = 'PGRST116';
 
 const activeCoupleKey = (userId: string) => `sparklove_active_couple_${userId}`;
 
@@ -48,35 +21,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [couples, setCouples] = useState<Couple[]>([]);
   const [activeCouple, setActiveCoupleState] = useState<Couple | null>(null);
   const [loadingCouples, setLoadingCouples] = useState(true);
-
-  const fetchProfile = useCallback(async (currentUser: User) => {
-    if (!currentUser) return;
-    try {
-      let { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (error && error.code === POSTGREST_NOT_FOUND_ERROR) {
-        // Profile does not exist, so create it
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert({ id: currentUser.id })
-          .select('id, first_name, last_name')
-          .single();
-
-        if (insertError) throw insertError;
-        data = newProfile;
-      } else if (error) {
-        throw error;
-      }
-
-      setProfile(data);
-    } catch (e) {
-      console.error("Failed to fetch or create profile:", e);
-    }
-  }, []);
 
   const persistActiveCouple = useCallback(async (userId: string, couple: Couple | null) => {
     try {
@@ -108,61 +52,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const fetchCouples = useCallback(async (currentUser: User) => {
-    if (!currentUser) return;
-
-    setLoadingCouples(true);
-    try {
-      const { data: coupleData, error: coupleError } = await supabase
-        .from('couples')
-        .select('id, user1_id, user2_id')
-        .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
-        .not('user2_id', 'is', null);
-
-      if (coupleError) throw coupleError;
-
-      const partnerIds = (coupleData || []).map(c => c.user1_id === currentUser.id ? c.user2_id : c.user1_id);
-
-      if (partnerIds.length === 0) {
-        setCouples([]);
-        setLoadingCouples(false);
-        return;
-      }
-
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .in('id', partnerIds);
-
-      if (profilesError) throw profilesError;
-
-      const profilesMap = new Map(profilesData.map(p => [p.id, p]));
-
-      const fetchedCouples: Couple[] = (coupleData || []).map((c: any) => {
-        const partnerId = c.user1_id === currentUser.id ? c.user2_id : c.user1_id;
-        const partnerProfile = profilesMap.get(partnerId);
-        return {
-          id: c.id,
-          partner: {
-            id: partnerId,
-            first_name: partnerProfile?.first_name || null,
-            last_name: partnerProfile?.last_name || null,
-            email: 'Email not loaded', // We need to fetch this separately if needed
-          },
-        };
-      });
-
-      setCouples(fetchedCouples);
-      await restoreActiveCouple(currentUser.id, fetchedCouples);
-    } catch (e) {
-      console.error("Failed to fetch couples:", e);
-      setCouples([]);
-      setActiveCoupleState(null);
-    } finally {
-      setLoadingCouples(false);
-    }
-  }, [restoreActiveCouple]);
-
   const setActiveCouple = useCallback((couple: Couple | null) => {
     setActiveCoupleState(couple);
     if (user) {
@@ -170,14 +59,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [persistActiveCouple, user]);
 
+  const refreshAllData = useCallback(async (currentUser: User) => {
+    if (!currentUser) return;
+
+    setLoadingCouples(true);
+    const profileData = await ProfileService.getProfile(currentUser);
+    setProfile(profileData);
+
+    const couplesData = await PartnerService.getHydratedCouples(currentUser);
+    setCouples(couplesData);
+    await restoreActiveCouple(currentUser.id, couplesData);
+    setLoadingCouples(false);
+
+  }, [restoreActiveCouple]);
+
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfile(session.user);
-        await fetchCouples(session.user);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        await refreshAllData(currentUser);
       }
       setLoading(false);
     };
@@ -186,11 +89,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const prevUserId = user?.id;
+        const currentUser = session?.user ?? null;
         setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user);
-          await fetchCouples(session.user);
+        setUser(currentUser);
+
+        if (currentUser) {
+          await refreshAllData(currentUser);
         } else {
           setProfile(null);
           setCouples([]);
@@ -205,21 +109,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [fetchCouples, fetchProfile, user?.id]);
+  }, [refreshAllData, user?.id]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await AuthService.signOut();
   };
 
   const refreshCouples = async () => {
     if (user) {
-      await fetchCouples(user);
+      setLoadingCouples(true);
+      const couplesData = await PartnerService.getHydratedCouples(user);
+      setCouples(couplesData);
+      await restoreActiveCouple(user.id, couplesData);
+      setLoadingCouples(false);
     }
   };
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchProfile(user);
+      const profileData = await ProfileService.getProfile(user);
+      setProfile(profileData);
     }
   };
 

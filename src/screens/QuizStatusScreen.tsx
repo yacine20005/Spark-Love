@@ -8,7 +8,7 @@ import { useQuizStatus } from "../hooks/useQuizStatus";
 import { QuizCategory } from "../types/quiz";
 import { GlassCard } from "../components/GlassCard";
 import { GradientButton } from "../components/GradientButton";
-import { QuizService } from "../lib/supabase";
+import { QuizService } from "../api/quizService";
 import { COLORS, FONTS, SPACING, OPACITY } from "../constants";
 
 

@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { supabase } from '../lib/supabase';
+import { AuthService } from '../api/authService';
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,15 +26,7 @@ export const useAuthFlow = () => {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          shouldCreateUser: true,
-          data: {
-            otpType: 'email',
-          },
-        },
-      });
+      const { error } = await AuthService.signInWithOtp(email);
       if (error) {
         Alert.alert('Authentication Error', error.message);
       } else {
@@ -67,11 +59,7 @@ export const useAuthFlow = () => {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: pendingEmail,
-        token: otpCode.trim(),
-        type: 'email',
-      });
+      const { error } = await AuthService.verifyOtp(pendingEmail, otpCode);
       if (error) {
         Alert.alert(
           'Invalid Code',
@@ -100,15 +88,7 @@ export const useAuthFlow = () => {
       return;
     }
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: pendingEmail,
-        options: {
-          shouldCreateUser: true,
-          data: {
-            otpType: 'email',
-          },
-        },
-      });
+      const { error } = await AuthService.resendConfirmationEmail(pendingEmail);
       if (error) {
         Alert.alert(
           'Error',
@@ -149,3 +129,4 @@ export const useAuthFlow = () => {
     resetAuthFlow,
   };
 };
+

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { QuizCategory } from "../types/quiz";
-import { QuizService } from "../lib/supabase";
+import { QuizService } from "../api/quizService";
 import { useAuth } from "../context/AuthContext";
 
 /**

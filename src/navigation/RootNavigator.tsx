@@ -14,7 +14,7 @@ import { RootStackParamList } from '../types/navigation';
 const Stack = createStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
-  const { session, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return null; // Or a loading spinner
@@ -23,7 +23,7 @@ export const RootNavigator: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {session ? (
+        {user ? (
           <>
             <Stack.Screen name="MainTabNavigator" component={MainTabNavigator} />
             <Stack.Screen name="QuizScreen" component={QuizScreen} />

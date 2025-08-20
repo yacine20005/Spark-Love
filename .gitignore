@@ -49,3 +49,15 @@ CRUSH.md
 
 # Github local files
 .github/
+
+# VSCode settings
+.vscode/
+
+# Supabase
+.branches
+.temp
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local

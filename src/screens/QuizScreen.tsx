@@ -17,7 +17,7 @@ import { QUIZ_CATEGORIES, QUIZ_SETTINGS } from "../constants";
 import { useNavigation } from "@react-navigation/native";
 import { NavigationProp } from "../types/navigation";
 import { useAuth } from "../context/AuthContext";
-import { QuizService } from "../lib/supabase";
+import { QuizService } from "../api/quizService";
 import {
   COLORS,
   FONTS,
@@ -62,17 +62,6 @@ export const QuizScreen: React.FC = () => {
     setError(null);
 
     try {
-      // Debug: Get diagnostic information
-      const diagnosticInfo = await QuizService.getDiagnosticInfo();
-      console.log("Database diagnostic info:", diagnosticInfo);
-
-      // If no questions exist, stop here with an info message
-      if (diagnosticInfo && diagnosticInfo.totalQuestions === 0) {
-        setError(
-          "No questions are available in the database. Please contact the administrator."
-        );
-        return;
-      }
 
       // Get progress for active couple (or solo mode if activeCouple is null)
       const progress = await QuizService.getQuizProgress(

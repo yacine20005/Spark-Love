@@ -77,10 +77,7 @@ export const QUIZ_CATEGORIES = {
 
 // Quiz Settings
 export const QUIZ_SETTINGS = {
-  QUESTIONS_PER_QUIZ: 10,
-  DAILY_QUIZ_LIMIT: 3,
-  WEEKLY_QUESTION_RELEASE: 10,
-  COMPATIBILITY_THRESHOLD: 70,
+  QUESTIONS_PER_QUIZ: 10
 };
 
 // Question Types Configuration
@@ -102,31 +99,3 @@ export const QUESTION_TYPES = {
     icon: '✅',
   },
 };
-
-// Sample Questions for Development
-export const SAMPLE_QUESTIONS = [
-  {
-    text: "How do you prefer to spend a quiet evening together?",
-    category: QuizCategory.ACTIVITIES,
-    type: 'multiple_choice',
-    options: ["Cuddling and watching TV", "Cooking together", "Reading books", "Playing games"],
-  },
-  {
-    text: "On a scale of 1-10, how important is physical touch in our relationship?",
-    category: QuizCategory.INTIMACY,
-    type: 'scale',
-    min_scale: 1,
-    max_scale: 10,
-    scale_labels: { min: "Not important", max: "Very important" },
-  },
-  {
-    text: "What's your biggest fear about our future together?",
-    category: QuizCategory.FUTURE,
-    type: 'text',
-  },
-  {
-    text: "Do you want to have children in the future?",
-    category: QuizCategory.FAMILY,
-    type: 'yes_no',
-  },
-]; 

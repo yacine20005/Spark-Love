@@ -3,7 +3,7 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { QuizCategory, Question, Answer } from "../types/quiz";
 import { RootStackParamList } from "../types/navigation";
-import { QuizService } from "../lib/supabase";
+import { QuizService } from "../api/quizService";
 import { useAuth } from "../context/AuthContext";
 
 export const useQuiz = (category: QuizCategory) => {

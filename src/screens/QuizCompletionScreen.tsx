@@ -12,7 +12,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { GradientButton } from "../components/GradientButton";
 import { GlassCard } from "../components/GlassCard";
 import { RootStackParamList } from "../types/navigation";
-import { QuizService } from "../lib/supabase";
+import { QuizService } from "../api/quizService";
 import { useAuth } from "../context/AuthContext";
 import { useQuizStatus } from "../hooks/useQuizStatus";
 import { COLORS, FONTS, SPACING, OPACITY } from "../constants";

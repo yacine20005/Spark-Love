@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../types/navigation";
-import { QuizService } from "../lib/supabase";
+import { QuizService } from "../api/quizService";
 import { useAuth } from "../context/AuthContext";
 import { GlassCard } from "../components/GlassCard";
 import { COLORS, FONTS, SPACING, OPACITY } from "../constants";
