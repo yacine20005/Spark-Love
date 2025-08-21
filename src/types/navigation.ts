@@ -6,6 +6,7 @@ import { QuizCategory } from "./quiz";
 export type RootStackParamList = {
   MainTabNavigator: undefined;
   AuthScreen: undefined;
+  NameSetupScreen: undefined;
   QuizScreen: undefined;
   QuizQuestionsScreen: { category: QuizCategory };
   QuizCompletionScreen: {
