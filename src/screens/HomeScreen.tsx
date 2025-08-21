@@ -22,7 +22,7 @@ const { width, height } = Dimensions.get("window");
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const insets = useSafeAreaInsets();
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   const features = [
     {
@@ -68,7 +68,7 @@ export const HomeScreen: React.FC = () => {
           <GlassCard style={styles.headerCard} opacity={OPACITY.glass}>
             <Text style={styles.appTitle}>Spark Love</Text>
             <Text style={styles.subtitle}>
-              Welcome, {user?.email}
+              Welcome, {profile?.first_name || user?.email}
             </Text>
             <GradientButton
               title="Sign Out"

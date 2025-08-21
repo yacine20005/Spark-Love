@@ -102,7 +102,7 @@ export const QuizScreen: React.FC = () => {
 
     if (progress >= 100) {
       // Already completed: go to status screen (wait/compare/redo)
-      navigation.navigate("QuizStatusScreen", { category, coupleId: activeCouple?.id || null });
+      navigation.navigate("QuizCompletionScreen", { category, answers: [], coupleId: activeCouple?.id || null });
     } else {
       // Not completed: go to questions
       navigation.navigate("QuizQuestionsScreen", { category });
@@ -144,9 +144,8 @@ export const QuizScreen: React.FC = () => {
             <Text style={styles.title}>Quiz Categories</Text>
             <Text style={styles.subtitle}>
               {activeCouple
-                ? `Couple mode with ${
-                    activeCouple.partner.email || "your partner"
-                  }`
+                ? `Couple mode with ${activeCouple.partner.first_name || "your partner"
+                }`
                 : "Solo mode - Discover yourself!"}
             </Text>
           </GlassCard>
@@ -194,7 +193,7 @@ export const QuizScreen: React.FC = () => {
                   <Text style={styles.statNumber}>
                     {Math.round(
                       Object.values(quizProgress).reduce((a, b) => a + b, 0) /
-                        Object.keys(quizProgress).length
+                      Object.keys(quizProgress).length
                     )}
                     %
                   </Text>
@@ -232,7 +231,7 @@ export const QuizScreen: React.FC = () => {
                 <QuizCard
                   key={category}
                   category={category}
-                  onPress={() => {}}
+                  onPress={() => { }}
                   isLocked={true}
                 />
               ))}

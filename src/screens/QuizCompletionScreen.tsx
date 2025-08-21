@@ -97,17 +97,31 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
     refreshStatus();
   };
 
+  // Emoji d'en-tête harmonisé avec Auth/NameSetup selon l'état
+  const headerEmoji = saving || statusLoading
+    ? "🔄"
+    : saveError
+      ? "⚠️"
+      : !isCouple
+        ? "🎉"
+        : canCompare && bothCompleted
+          ? "💕"
+          : "⏳";
+
   const renderContent = () => {
     if (saving || statusLoading) {
       return (
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
+          <View style={styles.statusChipLoading}>
+            <Text style={styles.statusChipText}>Saving</Text>
+          </View>
           <ActivityIndicator
             size="large"
             color={COLORS.primary}
             style={styles.loader}
           />
-          <Text style={styles.title}>Saving in progress...</Text>
-          <Text style={styles.subtitle}>We are saving your answers</Text>
+          <Text style={styles.title}>Saving your progress…</Text>
+          <Text style={styles.subtitle}>Please wait while we save your answers.</Text>
         </GlassCard>
       );
     }
@@ -115,18 +129,23 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
     if (saveError) {
       return (
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
-          <Text style={styles.title}>Save Error</Text>
+          <View style={styles.statusChipError}>
+            <Text style={styles.statusChipText}>Error</Text>
+          </View>
+          <Text style={styles.title}>Save error</Text>
           <Text style={styles.subtitle}>{saveError}</Text>
-          <GradientButton
-            title="Try Again"
-            onPress={handleRetry}
-            style={styles.button}
-          />
-          <GradientButton
-            title="Back to Quizzes"
-            onPress={handleReturnToQuiz}
-            style={styles.secondaryButton}
-          />
+          <View style={styles.actions}>
+            <GradientButton
+              title="Try again"
+              onPress={handleRetry}
+              style={styles.button}
+            />
+            <GradientButton
+              title="Back to quizzes"
+              onPress={handleReturnToQuiz}
+              style={styles.secondaryButton}
+            />
+          </View>
         </GlassCard>
       );
     }
@@ -135,16 +154,17 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
     if (!isCouple) {
       return (
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
-          <Text style={styles.title}>Quiz Completed!</Text>
+          <Text style={styles.title}>Quiz completed</Text>
           <Text style={styles.subtitle}>
-            Excellent work! You have completed this quiz in solo mode. Your
-            answers have been saved.
+            Great job! You completed this quiz in solo mode. Your answers are saved.
           </Text>
-          <GradientButton
-            title="Back to Quizzes"
-            onPress={handleReturnToQuiz}
-            style={styles.button}
-          />
+          <View style={styles.actions}>
+            <GradientButton
+              title="Back to quizzes"
+              onPress={handleReturnToQuiz}
+              style={styles.button}
+            />
+          </View>
         </GlassCard>
       );
     }
@@ -153,21 +173,26 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
     if (canCompare && bothCompleted) {
       return (
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
-          <Text style={styles.title}>Quiz Completed by Both!</Text>
+          <View style={styles.statusChipSuccess}>
+            <Text style={styles.statusChipText}>Ready</Text>
+          </View>
+          <Text style={styles.title}>Both completed</Text>
           <Text style={styles.subtitle}>
-            Perfect! You and your partner have both completed this
-            quiz. You can now compare your answers!
+            Perfect! You and your partner finished this quiz. Compare your answers now.
           </Text>
-          <GradientButton
-            title="Compare Our Answers"
-            onPress={handleGoToComparison}
-            style={styles.button}
-          />
-          <GradientButton
-            title="Back to Quizzes"
-            onPress={handleReturnToQuiz}
-            style={styles.secondaryButton}
-          />
+          <View style={styles.actions}>
+            <GradientButton
+              title="Compare our answers"
+              onPress={handleGoToComparison}
+              style={styles.button}
+
+            />
+            <GradientButton
+              title="Back to quizzes"
+              onPress={handleReturnToQuiz}
+              style={styles.secondaryButton}
+            />
+          </View>
         </GlassCard>
       );
     }
@@ -175,23 +200,25 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
     // Couple mode - Waiting for partner
     return (
       <GlassCard style={styles.card} opacity={OPACITY.glass}>
-        <Text style={styles.title}>Waiting for Your Partner</Text>
+        <View style={styles.statusChipInfo}>
+          <Text style={styles.statusChipText}>Pending</Text>
+        </View>
+        <Text style={styles.title}>Waiting for your partner</Text>
         <Text style={styles.subtitle}>
-          You have completed your part of the quiz!{" "}
-          {activeCouple?.partner?.email || "Your partner"} must now
-          answer the same questions. You will receive a notification when
-          you can compare your answers.
+          You finished your part. {activeCouple?.partner?.first_name || "Your partner"} still needs to answer. We’ll notify you when it’s ready.
         </Text>
-        <GradientButton
-          title="Check Status"
-          onPress={handleRefreshStatus}
-          style={styles.button}
-        />
-        <GradientButton
-          title="Back to Quizzes"
-          onPress={handleReturnToQuiz}
-          style={styles.secondaryButton}
-        />
+        <View style={styles.actions}>
+          <GradientButton
+            title="Refresh status"
+            onPress={handleRefreshStatus}
+            style={styles.button}
+          />
+          <GradientButton
+            title="Back to quizzes"
+            onPress={handleReturnToQuiz}
+            style={styles.secondaryButton}
+          />
+        </View>
       </GlassCard>
     );
   };
@@ -203,7 +230,12 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
         backgroundColor="transparent"
         translucent
       />
-      <View style={styles.content}>{renderContent()}</View>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.icon}>{headerEmoji}</Text>
+        </View>
+        {renderContent()}
+      </View>
     </SafeAreaView>
   );
 };
@@ -218,9 +250,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: SPACING.lg,
   },
+  header: {
+    alignItems: "center",
+    marginBottom: SPACING.xl,
+  },
+  icon: {
+    fontSize: 80,
+    marginBottom: SPACING.sm,
+  },
   card: {
     padding: SPACING.xl,
     alignItems: "center",
+    width: "100%",
   },
   loader: {
     marginBottom: SPACING.lg,
@@ -238,13 +279,59 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: SPACING.xl,
   },
+  actions: {
+    width: "100%",
+    alignItems: "center",
+    maxWidth: 420,
+    alignSelf: "center",
+  },
   button: {
     width: "100%",
+    marginTop: SPACING.sm,
     marginBottom: SPACING.md,
   },
   secondaryButton: {
     width: "100%",
     marginBottom: SPACING.md,
-    opacity: 0.8,
+    opacity: 0.9,
+  },
+  statusChipBase: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: 999,
+    marginBottom: SPACING.md,
+  },
+  statusChipText: {
+    ...FONTS.caption,
+    color: COLORS.textPrimary,
+    textAlign: "center",
+  },
+  statusChipSuccess: {
+    backgroundColor: "rgba(46, 204, 113, 0.25)",
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: 999,
+    marginBottom: SPACING.md,
+  },
+  statusChipError: {
+    backgroundColor: "rgba(231, 76, 60, 0.25)",
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: 999,
+    marginBottom: SPACING.md,
+  },
+  statusChipInfo: {
+    backgroundColor: "rgba(52, 152, 219, 0.25)",
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: 999,
+    marginBottom: SPACING.md,
+  },
+  statusChipLoading: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: 999,
+    marginBottom: SPACING.md,
   },
 });
