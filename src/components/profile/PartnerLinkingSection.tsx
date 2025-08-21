@@ -1,7 +1,6 @@
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Modal,
   View,
   Text,
   StyleSheet,
@@ -10,18 +9,22 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { GlassCard } from '../GlassCard';
 import { GradientButton } from '../GradientButton';
 import { usePartnerLinking } from '../../hooks/usePartnerLinking';
-import { COLORS, FONTS, SPACING } from '../../constants';
+import { COLORS, FONTS, SPACING, OPACITY } from '../../constants';
 
 interface PartnerLinkingModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-export const PartnerLinkingModal: React.FC<PartnerLinkingModalProps> = ({ visible, onClose }) => {
+export const PartnerLinkingSection: React.FC<PartnerLinkingModalProps> = ({ visible, onClose }) => {
   const {
     modalContent,
     setModalContent,
@@ -33,6 +36,40 @@ export const PartnerLinkingModal: React.FC<PartnerLinkingModalProps> = ({ visibl
     handleLinkPartner,
     copyToClipboard,
   } = usePartnerLinking();
+
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        Animated.timing(translateY, {
+          toValue: -e.endCoordinates.height + 50,
+          duration: Platform.OS === 'ios' ? e.duration : 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (e) => {
+        setKeyboardHeight(0);
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: Platform.OS === 'ios' ? e.duration : 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    );
+
+    return () => {
+      keyboardWillShowListener?.remove();
+      keyboardWillHideListener?.remove();
+    };
+  }, [translateY]);
 
   const renderModalContent = () => {
     if (isLoading) {
@@ -83,58 +120,85 @@ export const PartnerLinkingModal: React.FC<PartnerLinkingModalProps> = ({ visibl
     }
   };
 
-  return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}>
-      <View style={styles.modalContainer}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardAvoidingView}
-        >
-          <GlassCard style={styles.modalContent} opacity={1}>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
+  if (!visible) return null;
 
-            {modalContent !== 'options' && (
-              <TouchableOpacity onPress={() => setModalContent('options')} style={styles.backButton}>
-                <Text style={styles.backButtonText}>‹ Back</Text>
-              </TouchableOpacity>
-            )}
-            <View style={styles.modalInnerContent}>
-              {renderModalContent()}
+  return (
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          transform: [{ translateY: translateY }],
+        },
+      ]}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingView}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionBackground}>
+              <GlassCard style={styles.sectionCard} opacity={OPACITY.glass}>
+                <View style={styles.sectionHeader}>
+                  {modalContent !== 'options' && (
+                    <TouchableOpacity
+                      onPress={() => setModalContent('options')}
+                      style={styles.backButton}
+                    >
+                      <Text style={styles.backButtonText}>‹ Back</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={onClose}
+                    style={styles.closeButton}
+                  >
+                    <Text style={styles.closeButtonText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.sectionContent}>
+                  {renderModalContent()}
+                </View>
+              </GlassCard>
             </View>
-          </GlassCard>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.9)',
+  container: {
+    width: '100%',
+  },
+  sectionContainer: {
+    width: '100%',
   },
   keyboardAvoidingView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     width: '100%',
   },
-  modalContent: {
-    width: '90%',
+  sectionBackground: {
+    width: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 1)',
+    borderRadius: 15,
+    padding: 1,
+  },
+  sectionCard: {
+    width: '100%',
     padding: SPACING.xl,
   },
-  modalInnerContent: {
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    paddingTop: SPACING.xl, // To avoid overlap with buttons
+    marginBottom: SPACING.xl,
+  },
+  sectionContent: {
+    alignItems: 'center',
+    width: '100%',
   },
   modalTitle: {
     ...FONTS.h1,
@@ -147,6 +211,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginBottom: SPACING.xl,
     textAlign: 'center',
+    lineHeight: 24,
   },
   textInput: {
     width: '100%',
@@ -154,10 +219,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.textSecondary,
     borderRadius: 10,
-    padding: 10,
+    padding: SPACING.md,
     color: COLORS.textPrimary,
-    backgroundColor: COLORS.background,
-    fontSize: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    fontSize: 20,
     textAlign: 'center',
     marginBottom: SPACING.lg,
     letterSpacing: 4,
@@ -168,22 +233,24 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.lg,
   },
   codeContainer: {
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.lg,
-    borderRadius: 15,
-    marginBottom: SPACING.lg,
+    width: '100%',
+    padding: SPACING.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.textSecondary,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   generatedCode: {
     ...FONTS.largeTitle,
     color: COLORS.primary,
     letterSpacing: 5,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 28,
   },
   closeButton: {
-    position: 'absolute',
-    top: SPACING.md,
-    right: SPACING.md,
     padding: SPACING.sm,
-    zIndex: 1,
   },
   closeButtonText: {
     fontSize: 24,
@@ -191,11 +258,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   backButton: {
-    position: 'absolute',
-    top: SPACING.md,
-    left: SPACING.md,
     padding: SPACING.sm,
-    zIndex: 1,
   },
   backButtonText: {
     ...FONTS.button,

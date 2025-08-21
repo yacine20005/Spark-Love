@@ -12,7 +12,7 @@ import { GlassCard } from '../components/GlassCard';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, FONTS, SPACING, OPACITY } from '../constants';
 import { usePartnerLinking } from '../hooks/usePartnerLinking';
-import { PartnerLinkingModal } from '../components/profile/PartnerLinkingModal';
+import { PartnerLinkingSection } from '../components/profile/PartnerLinkingSection';
 import { PartnerCard } from '../components/profile/PartnerCard';
 import { ProfileForm } from '../components/profile/ProfileForm';
 import { GradientButton } from '../components/GradientButton';
@@ -41,7 +41,9 @@ export const ProfileScreen: React.FC = () => {
 
       </ScrollView>
 
-      <PartnerLinkingModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+      {modalVisible && (
+        <PartnerLinkingSection visible={modalVisible} onClose={() => setModalVisible(false)} />
+      )}
     </SafeAreaView>
   );
 };
@@ -80,4 +82,3 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
-
