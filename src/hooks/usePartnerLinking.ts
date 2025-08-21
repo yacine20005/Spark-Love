@@ -39,12 +39,12 @@ export const usePartnerLinking = () => {
     setIsLoading(true);
     setGeneratedCode('');
     try {
-      let code: string;
+      // Initialize with a first candidate to satisfy TS and reduce one DB round-trip when lucky
+      let code: string = generateCodeLocal();
       let exists = true;
       let attempts = 0;
       // Try up to 10 times to generate a unique code
       while (exists && attempts < 10) {
-        code = generateCodeLocal();
         const { data: existing } = await supabase
           .from('couples')
           .select('id')
@@ -52,6 +52,7 @@ export const usePartnerLinking = () => {
           .single();
         exists = !!existing;
         attempts++;
+        if (exists) code = generateCodeLocal();
       }
       if (exists) throw new Error('Could not generate a unique code. Please try again.');
 

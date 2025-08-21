@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
+  StyleProp,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, FONTS, SIZES, SHADOWS } from "../constants";
@@ -12,8 +13,8 @@ import { COLORS, FONTS, SIZES, SHADOWS } from "../constants";
 interface GradientButtonProps {
   title: string;
   onPress: () => void;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   gradient?: readonly string[];
   disabled?: boolean;
   size?: "small" | "medium" | "large";
