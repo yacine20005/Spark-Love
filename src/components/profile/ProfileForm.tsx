@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, ScrollView } from 'react-native';
 import { GradientButton } from '../GradientButton';
 import { GlassCard } from '../GlassCard';
 import { useAuth } from '../../context/AuthContext';
@@ -40,35 +40,43 @@ export const ProfileForm: React.FC = () => {
 
   return (
     <GlassCard style={styles.card} opacity={OPACITY.glass}>
-      <Text style={styles.title}>Your Profile</Text>
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={[styles.input, styles.disabledInput]}
-        value={user?.email}
-        editable={false}
-      />
-      <Text style={styles.label}>First Name</Text>
-      <TextInput
-        style={styles.input}
-        value={firstName}
-        onChangeText={setFirstName}
-        placeholder="Enter your first name"
-        placeholderTextColor={COLORS.textSecondary}
-      />
-      <Text style={styles.label}>Last Name</Text>
-      <TextInput
-        style={styles.input}
-        value={lastName}
-        onChangeText={setLastName}
-        placeholder="Enter your last name"
-        placeholderTextColor={COLORS.textSecondary}
-      />
-      <GradientButton
-        title={loading ? 'Saving...' : 'Save Changes'}
-        onPress={handleUpdateProfile}
-        disabled={loading}
-        style={{ marginTop: SPACING.lg }}
-      />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>Your Profile</Text>
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={[styles.input, styles.disabledInput]}
+          value={user?.email}
+          editable={false}
+        />
+        <Text style={styles.label}>First Name</Text>
+        <TextInput
+          style={styles.input}
+          value={firstName}
+          onChangeText={setFirstName}
+          placeholder="Enter your first name"
+          placeholderTextColor={COLORS.textSecondary}
+          returnKeyType="next"
+        />
+        <Text style={styles.label}>Last Name</Text>
+        <TextInput
+          style={styles.input}
+          value={lastName}
+          onChangeText={setLastName}
+          placeholder="Enter your last name"
+          placeholderTextColor={COLORS.textSecondary}
+          returnKeyType="done"
+        />
+        <GradientButton
+          title={loading ? 'Saving...' : 'Save Changes'}
+          onPress={handleUpdateProfile}
+          disabled={loading}
+          style={{ marginTop: SPACING.lg }}
+        />
+      </ScrollView>
     </GlassCard>
   );
 };
@@ -77,6 +85,9 @@ const styles = StyleSheet.create({
   card: {
     padding: SPACING.lg,
     marginBottom: SPACING.xl,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   title: {
     ...FONTS.h2,

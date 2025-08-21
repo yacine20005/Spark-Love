@@ -7,6 +7,9 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GradientButton } from "../components/GradientButton";
@@ -59,52 +62,63 @@ export const NameSetupScreen: React.FC = () => {
         colors={GRADIENTS.background as [string, string, ...string[]]}
         style={styles.backgroundGradient}
       />
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.icon}>👋</Text>
-          <Text style={styles.title}>Welcome!</Text>
-          <Text style={styles.subtitle}>
-            Let's get to know you better. What's your name?
-          </Text>
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <Text style={styles.icon}>👋</Text>
+            <Text style={styles.title}>Welcome!</Text>
+            <Text style={styles.subtitle}>
+              Let's get to know you better. What's your name?
+            </Text>
+          </View>
 
-        <GlassCard style={styles.card} opacity={OPACITY.glass}>
-          <Text style={styles.cardTitle}>Tell us about yourself</Text>
+          <GlassCard style={styles.card} opacity={OPACITY.glass}>
+            <Text style={styles.cardTitle}>Tell us about yourself</Text>
 
-          <Text style={styles.label}>First Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your first name"
-            placeholderTextColor={COLORS.textSecondary}
-            value={firstName}
-            onChangeText={setFirstName}
-            autoCapitalize="words"
-            autoCorrect={false}
-          />
+            <Text style={styles.label}>First Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your first name"
+              placeholderTextColor={COLORS.textSecondary}
+              value={firstName}
+              onChangeText={setFirstName}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="next"
+            />
 
-          <Text style={styles.label}>Last Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your last name"
-            placeholderTextColor={COLORS.textSecondary}
-            value={lastName}
-            onChangeText={setLastName}
-            autoCapitalize="words"
-            autoCorrect={false}
-          />
+            <Text style={styles.label}>Last Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your last name"
+              placeholderTextColor={COLORS.textSecondary}
+              value={lastName}
+              onChangeText={setLastName}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="done"
+            />
 
-          <GradientButton
-            title={loading ? "Saving..." : "Continue"}
-            onPress={handleCompleteSetup}
-            disabled={loading || !firstName.trim() || !lastName.trim()}
-            style={styles.button}
-          />
+            <GradientButton
+              title={loading ? "Saving..." : "Continue"}
+              onPress={handleCompleteSetup}
+              disabled={loading || !firstName.trim() || !lastName.trim()}
+              style={styles.button}
+            />
 
-          <Text style={styles.infoText}>
-            This information helps us personalize your experience.
-          </Text>
-        </GlassCard>
-      </View>
+            <Text style={styles.infoText}>
+              This information helps us personalize your experience.
+            </Text>
+          </GlassCard>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -119,6 +133,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: SPACING.lg,
   },
   content: {
     flex: 1,

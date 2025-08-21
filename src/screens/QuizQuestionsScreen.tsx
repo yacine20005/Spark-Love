@@ -8,6 +8,8 @@ import {
   ScrollView,
   ActivityIndicator,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import { GradientButton } from "../components/GradientButton";
@@ -84,7 +86,14 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
         translucent
       />
       <View style={styles.backgroundGradient} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
         <GlassCard style={styles.questionCard} opacity={OPACITY.glass}>
           <Text style={styles.questionText}>{question.text}</Text>
           {question.type === "multiple_choice" && question.options && (
@@ -166,11 +175,12 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
               />
             </View>
           )}
-        </GlassCard>
-        <Text style={styles.progressText}>
-          Question {current + 1} / {questions.length}
-        </Text>
-      </ScrollView>
+          </GlassCard>
+          <Text style={styles.progressText}>
+            Question {current + 1} / {questions.length}
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -189,6 +199,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   backgroundGradient: {
     position: "absolute",

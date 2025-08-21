@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { GlassCard } from '../GlassCard';
 import { GradientButton } from '../GradientButton';
@@ -88,20 +90,25 @@ export const PartnerLinkingModal: React.FC<PartnerLinkingModalProps> = ({ visibl
       visible={visible}
       onRequestClose={onClose}>
       <View style={styles.modalContainer}>
-        <GlassCard style={styles.modalContent} opacity={1}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>✕</Text>
-          </TouchableOpacity>
-
-          {modalContent !== 'options' && (
-            <TouchableOpacity onPress={() => setModalContent('options')} style={styles.backButton}>
-              <Text style={styles.backButtonText}>‹ Back</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardAvoidingView}
+        >
+          <GlassCard style={styles.modalContent} opacity={1}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
-          )}
-          <View style={styles.modalInnerContent}>
-            {renderModalContent()}
-          </View>
-        </GlassCard>
+
+            {modalContent !== 'options' && (
+              <TouchableOpacity onPress={() => setModalContent('options')} style={styles.backButton}>
+                <Text style={styles.backButtonText}>‹ Back</Text>
+              </TouchableOpacity>
+            )}
+            <View style={styles.modalInnerContent}>
+              {renderModalContent()}
+            </View>
+          </GlassCard>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -113,6 +120,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.9)',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
   },
   modalContent: {
     width: '90%',
