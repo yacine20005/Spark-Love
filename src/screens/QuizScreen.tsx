@@ -83,22 +83,9 @@ export const QuizScreen: React.FC = () => {
     loadQuizProgress();
   }, [user, activeCouple, authLoading]);
 
-  const handleCategoryPress = async (category: QuizCategory) => {
+  const handleCategoryPress = (category: QuizCategory) => {
     setSelectedCategory(category);
     const progress = quizProgress[category] || 0;
-
-    // If in couple mode, check if both partners have completed this category
-    if (activeCouple?.id) {
-      try {
-        const bothCompleted = await QuizService.isQuizCompletedByBothPartners(activeCouple.id, category);
-        if (bothCompleted) {
-          navigation.navigate("ComparisonScreen", { categoryId: category, coupleId: activeCouple.id });
-          return;
-        }
-      } catch (e) {
-        console.warn('Failed to check couple completion, falling back to local progress:', e);
-      }
-    }
 
     if (progress >= 100) {
       // Already completed: go to status screen (wait/compare/redo)

@@ -7,7 +7,7 @@ import { NameSetupScreen } from '../screens/NameSetupScreen';
 import { QuizScreen } from '../screens/QuizScreen';
 import { QuizQuestionsScreen } from '../screens/QuizQuestionsScreen';
 import { QuizCompletionScreen } from '../screens/QuizCompletionScreen';
-import { ComparisonScreen } from '../screens/ComparisonScreen';
+import { ComparisonScreen } from '../screens/QuizComparisonScreen';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../types/navigation';
 

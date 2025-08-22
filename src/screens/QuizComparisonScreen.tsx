@@ -35,9 +35,9 @@ interface ComparisonData {
 type AnyAnswerRow = {
   user_id: string;
   answer: string | number;
-  question?: Question; // présent avec la jointure client
-  question_id?: string; // présent avec la RPC
-  question_text?: string; // présent avec la RPC
+  question?: Question | Question[];
+  question_id?: string;
+  question_text?: string;
 };
 
 export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
