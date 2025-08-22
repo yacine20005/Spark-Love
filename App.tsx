@@ -18,6 +18,7 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { COLORS } from "./src/constants/colors";
 import { AuthProvider } from "./src/context/AuthContext";
+import { QuizProvider } from "./src/context/QuizContext";
 import "react-native-url-polyfill/auto";
 
 export default function App() {
@@ -52,8 +53,10 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="light" />
-        <RootNavigator />
+        <QuizProvider>
+          <StatusBar style="light" />
+          <RootNavigator />
+        </QuizProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

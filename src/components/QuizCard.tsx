@@ -3,11 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GlassCard } from "./GlassCard";
 import { QuizCategory } from "../types/quiz";
-import { QUIZ_CATEGORIES, OPACITY } from "../constants";
+import { OPACITY } from "../constants";
 import { COLORS, FONTS, SPACING, LAYOUT } from "../constants";
 
 interface QuizCardProps {
-  category: QuizCategory;
+  category: QuizCategory; // Now the full category object
   onPress: () => void;
   isLocked?: boolean;
   progress?: number; // 0-100
@@ -21,10 +21,8 @@ export const QuizCard: React.FC<QuizCardProps> = ({
   progress = 0,
   questionCount = 0,
 }) => {
-  const categoryConfig = QUIZ_CATEGORIES[category];
-  const gradient = Array.isArray(categoryConfig.gradient)
-    ? categoryConfig.gradient
-    : [categoryConfig.color, categoryConfig.color];
+  // The gradient can be derived from the category color or be more complex
+  const gradient = [category.color, category.color];
 
   return (
     <TouchableOpacity
@@ -39,7 +37,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({
         opacity={isLocked ? OPACITY.disabled : OPACITY.glass}
       >
         <View style={styles.header}>
-          <Text style={styles.icon}>{categoryConfig.icon}</Text>
+          <Text style={styles.icon}>{category.icon}</Text>
           {isLocked && (
             <View style={styles.lockContainer}>
               <Text style={styles.lockIcon}>🔒</Text>
@@ -48,11 +46,11 @@ export const QuizCard: React.FC<QuizCardProps> = ({
         </View>
 
         <Text style={[styles.title, isLocked && styles.lockedText]}>
-          {categoryConfig.name}
+          {category.name}
         </Text>
 
         <Text style={[styles.description, isLocked && styles.lockedText]}>
-          {categoryConfig.description}
+          {category.description}
         </Text>
 
         {!isLocked && (
@@ -61,10 +59,10 @@ export const QuizCard: React.FC<QuizCardProps> = ({
               <View style={styles.progressContainer}>
                 <View style={styles.progressBar}>
                   <View
-                    style={[styles.progressFill, { width: `${progress}%` }]}
+                    style={[styles.progressFill, { width: `${Math.round(progress)}%` }]}
                   />
                 </View>
-                <Text style={styles.progressText}>{progress}%</Text>
+                <Text style={styles.progressText}>{Math.round(progress)}%</Text>
               </View>
             )}
 

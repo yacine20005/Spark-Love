@@ -14,21 +14,21 @@ import {
 import Slider from "@react-native-community/slider";
 import { GradientButton } from "../components/GradientButton";
 import { GlassCard } from "../components/GlassCard";
-import { QuizCategory } from "../types/quiz";
-import { useQuiz } from "../hooks/useQuiz";
+import { useQuizSession } from "../hooks/useQuizSession"; // Updated hook
+import { useQuiz } from "../context/QuizContext"; // Context for loading/error
 import { COLORS, FONTS, SPACING, OPACITY } from "../constants";
 
 interface QuizQuestionsScreenProps {
-  route: { params: { category: QuizCategory } };
+  route: { params: { categoryId: string } }; // Updated params
 }
 
 export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
   route,
 }) => {
-  const { category } = route.params;
+  const { categoryId } = route.params;
+  const { loading: contextLoading, error: contextError } = useQuiz();
   const {
-    loading,
-    error,
+    category,
     questions,
     question,
     current,
@@ -37,9 +37,9 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
     setTextInput,
     scaleValue,
     setScaleValue,
-  } = useQuiz(category);
+  } = useQuizSession(categoryId);
 
-  if (loading) {
+  if (contextLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
@@ -50,17 +50,17 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
     );
   }
 
-  if (error) {
+  if (contextError) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
-          <Text style={styles.questionText}>{error}</Text>
+          <Text style={styles.questionText}>{contextError}</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (!question) {
+  if (!question || !category) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar
@@ -94,6 +94,7 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
+        <Text style={styles.categoryTitle}>{category.name}</Text>
         <GlassCard style={styles.questionCard} opacity={OPACITY.glass}>
           <Text style={styles.questionText}>{question.text}</Text>
           {question.type === "multiple_choice" && question.options && (
@@ -220,6 +221,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     padding: SPACING.lg,
+  },
+  categoryTitle: {
+    ...FONTS.h1,
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
   },
   questionCard: {
     marginBottom: SPACING.xl,
