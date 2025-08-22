@@ -26,18 +26,14 @@ export const useQuizStatus = (category: QuizCategory, coupleId?: string | null) 
     setError(null);
 
     try {
-      console.log(`🔍 Checking quiz status for category: ${category}, coupleId: ${effectiveCoupleId}`);
-      
+
       if (effectiveCoupleId) {
         // Couple mode: check both partners
         const progress = await QuizService.getQuizProgress(user.id, effectiveCoupleId);
         setUserProgress(progress[category] || 0);
-        console.log(`📊 User progress for ${category}: ${progress[category] || 0}%`);
 
         // Check if both partners have completed the quiz
         const completed = await QuizService.isQuizCompletedByBothPartners(effectiveCoupleId, category);
-        console.log(`✅ Both partners completed ${category}: ${completed}`);
-        
         setBothCompleted(completed);
         setCanCompare(completed);
 
@@ -50,13 +46,11 @@ export const useQuizStatus = (category: QuizCategory, coupleId?: string | null) 
         }
       } else {
         // Solo mode: only user counts
-        console.log(`🏠 Solo mode for category: ${category}`);
         const progress = await QuizService.getQuizProgress(user.id, null);
         setUserProgress(progress[category] || 0);
         setPartnerProgress(0);
         setBothCompleted(progress[category] === 100);
         setCanCompare(false); // No comparison in solo mode
-        console.log(`📊 Solo progress for ${category}: ${progress[category] || 0}%`);
       }
     } catch (err) {
       console.error('Error checking quiz status:', err);
@@ -71,7 +65,6 @@ export const useQuizStatus = (category: QuizCategory, coupleId?: string | null) 
   }, [checkQuizStatus]);
 
   const refresh = useCallback(() => {
-    console.log('🔄 Refreshing quiz status...');
     setRefreshKey(prev => prev + 1);
   }, []);
 

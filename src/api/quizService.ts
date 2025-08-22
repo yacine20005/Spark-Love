@@ -27,9 +27,7 @@ export class QuizService {
     user_id: string;
     couple_id: string | null;
   }>) {
-    console.log(`💾 Saving ${answers.length} answers...`);
-    console.log(`📝 Mode: ${answers[0]?.couple_id ? 'Couple' : 'Solo'}`);
-    
+
     // Convert answers to the correct format for database
     const formattedAnswers = answers.map(answer => ({
       user_id: answer.user_id,
@@ -37,12 +35,6 @@ export class QuizService {
       couple_id: answer.couple_id, // null for solo mode, UUID for couple mode
       answer: typeof answer.answer === 'number' ? answer.answer.toString() : answer.answer
     }));
-
-    console.log('📋 Formatted answers:', formattedAnswers.map(a => ({
-      question_id: a.question_id.substring(0, 8) + '...',
-      couple_id: a.couple_id ? a.couple_id.substring(0, 8) + '...' : 'null (solo)',
-      answer: a.answer
-    })));
 
     const { data, error } = await supabase
       .from('user_answers')
@@ -56,7 +48,6 @@ export class QuizService {
       throw error;
     }
 
-    console.log(`✅ ${data?.length || 0} answers saved successfully`);
     return data;
   }
 
@@ -137,7 +128,7 @@ export class QuizService {
           console.error(`Error getting answers for ${category}:`, answersError);
           progress[category] = 0;
         } else {
-          const percentage = totalQuestions > 0 
+          const percentage = totalQuestions > 0
             ? Math.round(((answersCount || 0) / totalQuestions) * 100)
             : 0;
           progress[category] = percentage;
@@ -210,61 +201,7 @@ export class QuizService {
     }
   }
 
-  // Diagnostic function to check basic data
-  static async getDiagnosticInfo() {
-    try {
-      // Compter le total de questions
-      const { count: totalQuestions, error: totalError } = await supabase
-        .from('questions')
-        .select('*', { count: 'exact', head: true });
-
-      // Compter les questions actives
-      const { count: activeQuestions, error: activeError } = await supabase
-        .from('questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
-
-      // Compter par catégorie
-      const categoryBreakdown: Record<string, number> = {};
-      const categories = Object.values(QuizCategory);
-      
-      for (const category of categories) {
-        const { count, error } = await supabase
-          .from('questions')
-          .select('*', { count: 'exact', head: true })
-          .eq('category', category)
-          .eq('is_active', true);
-        
-        if (!error) {
-          categoryBreakdown[category] = count || 0;
-        }
-      }
-
-      // Test des réponses utilisateur
-      const { count: totalAnswers, error: answersError } = await supabase
-        .from('user_answers')
-        .select('*', { count: 'exact', head: true });
-
-      return {
-        totalQuestions: totalQuestions || 0,
-        activeQuestions: activeQuestions || 0,
-        totalUserAnswers: totalAnswers || 0,
-        categoryBreakdown,
-        errors: {
-          totalError: totalError?.message,
-          activeError: activeError?.message,
-          answersError: answersError?.message
-        }
-      };
-    } catch (error) {
-      console.error('Error getting diagnostic info:', error);
-      return null;
-    }
-  }
-
   // Reset answers for a given category and context
-  // - Couple mode: call secure RPC to delete all answers for BOTH partners where couple_id matches
-  // - Solo mode: delete only current user's answers where couple_id IS NULL
   static async resetQuizAnswers(category: QuizCategory, coupleId: string | null, userId: string) {
     try {
       if (coupleId) {
@@ -295,7 +232,6 @@ export class QuizService {
         }
 
         const count = delData?.length || 0;
-        console.log(`🗑️ Couple reset for ${category}. Deleted: ${count}`);
         return { deleted: count };
       }
 
@@ -327,7 +263,6 @@ export class QuizService {
       }
 
       const count = delData?.length || 0;
-      console.log(`🗑️ Solo reset for ${category}. Deleted: ${count}`);
       return { deleted: count };
     } catch (error) {
       console.error('Failed to reset quiz answers:', error);

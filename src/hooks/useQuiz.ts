@@ -66,9 +66,7 @@ export const useQuiz = (category: QuizCategory) => {
     if (!isLast) {
       setCurrent((c) => c + 1);
     } else {
-      // Quiz completed - save all answers
-      console.log('🎯 Quiz completed, saving answers...');
-      
+      // Quiz completed - save all answers      
       try {
         await QuizService.saveAnswers(newAnswers.map(ans => ({
           question_id: ans.question_id,
@@ -76,12 +74,11 @@ export const useQuiz = (category: QuizCategory) => {
           user_id: ans.user_id!,
           couple_id: ans.couple_id || null,
         })));
-        
-        console.log('✅ Answers saved successfully');
+
       } catch (err) {
         console.error('❌ Error saving answers:', err);
       }
-      
+
       // Navigate to completion screen with saved answers
       navigation.replace("QuizCompletionScreen", {
         category,

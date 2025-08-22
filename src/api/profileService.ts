@@ -13,9 +13,6 @@ export class ProfileService {
         .single();
 
       if (error) {
-        // We are not handling the "not found" error anymore, 
-        // because the trigger should have already created the profile.
-        // If there's an error, we log it and return null.
         console.error("Failed to fetch profile:", error);
         return null;
       }

@@ -72,7 +72,7 @@ export class PartnerService {
             id: partnerId,
             first_name: partnerProfile?.first_name || null,
             last_name: partnerProfile?.last_name || null,
-            email: 'Email not loaded', // We need to fetch this separately if needed
+            email: 'null', // The email is stored in the auth table in supabase
           },
         };
       });

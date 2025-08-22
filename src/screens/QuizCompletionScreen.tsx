@@ -47,9 +47,6 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
   useEffect(() => {
     // Answers have already been saved by useQuiz
     // We'll just update status to display the right interface
-    console.log(
-      "Quiz completion screen - answers already saved, updating status..."
-    );
 
     setSaving(false);
     // Refresh status to get latest data
@@ -93,7 +90,6 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
   };
 
   const handleRefreshStatus = () => {
-    console.log("🔄 Manual status refresh...");
     refreshStatus();
   };
 
