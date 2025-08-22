@@ -36,50 +36,47 @@ interface ComparisonData {
   questionText: string;
   yourAnswer: string | number;
   partnerAnswer: string | number;
-  questionType: string; // Assuming you can get this from your data
+  questionType: string;
+  question: Question;
 }
 
 type AnyAnswerRow = {
   user_id: string;
   answer: string | number;
   question?: Question | Question[];
-  question_id?: string;
-  question_text?: string;
-  question_type?: string;
 };
 
-const AnswerDisplay = ({
-  label,
+const AnswerRenderer = ({
   answer,
+  question,
   isScale,
 }: {
-  label: string;
   answer: string | number;
+  question: Question;
   isScale: boolean;
 }) => {
   if (isScale && typeof answer === "number") {
-    const percentage = Math.max(0, Math.min(100, answer * 10)); // Assuming a 1-10 scale
+    const min = question.min_scale ?? 1;
+    const max = question.max_scale ?? 10;
+    const range = max - min;
+    const percentage = range > 0 ? ((answer - min) / range) * 100 : 0;
+    const displayPercentage = Math.max(0, Math.min(100, percentage));
+
     return (
-      <View style={styles.answerContainer}>
-        <Text style={styles.answerLabel}>{label}:</Text>
-        <View style={styles.scaleWrapper}>
-          <View style={styles.scaleTrack}>
-            <View
-              style={[styles.scaleBar, { width: `${percentage}%` }]}
-            />
-          </View>
-          <Text style={styles.scaleText}>{answer}/10</Text>
+      <View style={styles.scaleWrapper}>
+        <View style={styles.scaleTrack}>
+          <View
+            style={[styles.scaleBar, { width: `${displayPercentage}%` }]}
+          />
         </View>
+        <Text style={styles.scaleText}>
+          {answer}/{max}
+        </Text>
       </View>
     );
   }
 
-  return (
-    <View style={styles.answerContainer}>
-      <Text style={styles.answerLabel}>{label}:</Text>
-      <Text style={styles.answerText}>{answer}</Text>
-    </View>
-  );
+  return <Text style={styles.answerText}>{String(answer)}</Text>;
 };
 
 export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
@@ -113,10 +110,19 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
             const qJoined = Array.isArray(ans.question)
               ? ans.question[0]
               : ans.question;
-            const qId = ans.question_id ?? qJoined?.id ?? "unknown";
-            const qText = ans.question_text ?? qJoined?.text ?? "";
-            const qType =
-              ans.question_type ?? qJoined?.type ?? "multiple_choice";
+            if (!qJoined) return acc; // Skip if question data is missing
+
+            const qId = qJoined.id;
+            const qText = qJoined.text;
+            const qType = qJoined.type ?? "multiple_choice";
+
+            let finalAnswer: string | number = ans.answer;
+            if (qType === "scale" && typeof ans.answer === "string") {
+              const parsedAnswer = parseFloat(ans.answer);
+              if (!isNaN(parsedAnswer)) {
+                finalAnswer = parsedAnswer;
+              }
+            }
 
             if (!acc[qId]) {
               acc[qId] = {
@@ -124,12 +130,14 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
                 yourAnswer: "N/A",
                 partnerAnswer: "N/A",
                 questionType: qType,
-              } as ComparisonData;
+                question: qJoined,
+              };
             }
+
             if (ans.user_id === user.id) {
-              acc[qId].yourAnswer = ans.answer;
+              acc[qId].yourAnswer = finalAnswer;
             } else if (ans.user_id === partnerId) {
-              acc[qId].partnerAnswer = ans.answer;
+              acc[qId].partnerAnswer = finalAnswer;
             }
             return acc;
           }, {} as Record<string, ComparisonData>);
@@ -163,6 +171,8 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
     );
   }
 
+  const partnerName = activeCouple?.partner?.first_name || "Partner";
+
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
@@ -175,7 +185,7 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
             <GlassCard
               style={{
                 backgroundColor: categoryInfo.color || COLORS.primary,
-                borderRadius: SPACING.xl,
+                borderRadius: SPACING.md,
               }}
               contentStyle={styles.categoryCardContent}
               opacity={0.3}
@@ -202,16 +212,25 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
                   <Text style={styles.checkMark}>✅</Text>
                 )}
               </View>
-              <AnswerDisplay
-                label="You"
-                answer={item.yourAnswer}
-                isScale={isScaleQuestion}
-              />
-              <AnswerDisplay
-                label="Partner"
-                answer={item.partnerAnswer}
-                isScale={isScaleQuestion}
-              />
+
+              <View style={styles.comparisonRow}>
+                <View style={styles.labelsColumn}>
+                  <Text style={styles.answerLabel}>You:</Text>
+                  <Text style={styles.answerLabel}>{partnerName}:</Text>
+                </View>
+                <View style={styles.answersColumn}>
+                  <AnswerRenderer
+                    answer={item.yourAnswer}
+                    isScale={isScaleQuestion}
+                    question={item.question}
+                  />
+                  <AnswerRenderer
+                    answer={item.partnerAnswer}
+                    isScale={isScaleQuestion}
+                    question={item.question}
+                  />
+                </View>
+              </View>
             </GlassCard>
           );
         })}
@@ -275,17 +294,21 @@ const styles = StyleSheet.create({
     fontSize: FONTS.h3.fontSize,
     color: COLORS.success,
   },
-  answerContainer: {
+  comparisonRow: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.sm,
+  },
+  labelsColumn: {
+    justifyContent: "space-around",
+    marginRight: SPACING.md,
+  },
+  answersColumn: {
+    flex: 1,
+    justifyContent: "space-around",
   },
   answerLabel: {
     ...FONTS.body1,
     color: COLORS.primary,
     fontWeight: "bold",
-    marginRight: SPACING.sm,
-    width: 80,
   },
   answerText: {
     ...FONTS.body1,
@@ -293,7 +316,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   scaleWrapper: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
   },
