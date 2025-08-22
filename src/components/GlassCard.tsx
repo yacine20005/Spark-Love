@@ -6,6 +6,7 @@ import { COLORS, SIZES, SHADOWS } from "../constants";
 interface GlassCardProps {
   children: React.ReactNode;
   style?: ViewStyle;
+  contentStyle?: ViewStyle;
   gradient?: readonly string[];
   opacity?: number;
 }
@@ -13,6 +14,7 @@ interface GlassCardProps {
 export const GlassCard: React.FC<GlassCardProps> = ({
   children,
   style,
+  contentStyle,
   gradient = [COLORS.glass, COLORS.glassDark],
   opacity = 0.8,
 }) => {
@@ -24,7 +26,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
-      <View style={styles.content}>{children}</View>
+      <View style={[styles.content, contentStyle]}>{children}</View>
     </View>
   );
 };
