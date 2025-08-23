@@ -28,23 +28,22 @@ interface QuizCompletionScreenProps {
 export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
   route,
 }) => {
-  const { categoryId, coupleId } = route.params;
+  const { category, coupleId } = route.params;
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { activeCouple, user } = useAuth();
-  const { loading, error, progress, refreshQuizData, categories } = useQuiz();
+  const { loading, error, progress, refreshQuizData } = useQuiz();
 
   // Refresh the progress data when entering this screen
   useEffect(() => {
     refreshQuizData();
   }, []);
 
-  const category = categories.find(c => c.id === categoryId);
-  const categoryProgress = progress.find(p => p.category_id === categoryId);
+  const categoryProgress = progress.find(p => p.category_id === category.id);
 
   const handleGoToComparison = () => {
     if (coupleId) {
-      navigation.replace("QuizComparisonScreen", {
-        categoryId: categoryId,
+      navigation.replace("ComparisonScreen", {
+        categoryId: category.id,
         coupleId: coupleId,
       });
     }
@@ -58,8 +57,10 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
     if (loading) {
       return (
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
-          <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
-          <Text style={styles.title}>Loading status...</Text>
+          <View style={styles.cardContentWrapper}>
+            <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+            <Text style={styles.title}>Loading status...</Text>
+          </View>
         </GlassCard>
       );
     }
@@ -67,9 +68,9 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
     if (error || !category || !categoryProgress) {
       return (
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
-          <Text style={styles.title}>Error</Text>
-          <Text style={styles.subtitle}>{error || "Could not load quiz status."}</Text>
-          <View style={styles.buttonContainer}>
+          <View style={styles.cardContentWrapper}>
+            <Text style={styles.title}>Error</Text>
+            <Text style={styles.subtitle}>{error || "Could not load quiz status."}</Text>
             <GradientButton title="Back to Quizzes" onPress={handleReturnToQuiz} style={styles.button} />
           </View>
         </GlassCard>
@@ -80,10 +81,10 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
     if (!isCouple) {
       return (
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
-          <Text style={styles.icon}>🎉</Text>
-          <Text style={styles.title}>Quiz Completed!</Text>
-          <Text style={styles.subtitle}>Great job! You completed this quiz in solo mode. Your answers are saved.</Text>
-          <View style={styles.buttonContainer}>
+          <View style={styles.cardContentWrapper}>
+            <Text style={styles.icon}>🎉</Text>
+            <Text style={styles.title}>Quiz Completed!</Text>
+            <Text style={styles.subtitle}>Great job! You completed this quiz in solo mode. Your answers are saved.</Text>
             <GradientButton title="Back to Quizzes" onPress={handleReturnToQuiz} style={styles.button} />
           </View>
         </GlassCard>
@@ -99,10 +100,10 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
     if (bothCompleted) {
        return (
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
-          <Text style={styles.icon}>💕</Text>
-          <Text style={styles.title}>You Both Finished!</Text>
-          <Text style={styles.subtitle}>Perfect! You and your partner have both completed the {category.name} quiz. Ready to see how you compare?</Text>
-          <View style={styles.buttonContainer}>
+          <View style={styles.cardContentWrapper}>
+            <Text style={styles.icon}>💕</Text>
+            <Text style={styles.title}>You Both Finished!</Text>
+            <Text style={styles.subtitle}>Perfect! You and your partner have both completed the {category.name} quiz. Ready to see how you compare?</Text>
             <GradientButton title="Compare Answers" onPress={handleGoToComparison} style={styles.button} />
             <GradientButton title="Later" onPress={handleReturnToQuiz} style={styles.secondaryButton} />
           </View>
@@ -112,10 +113,10 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
 
     return (
       <GlassCard style={styles.card} opacity={OPACITY.glass}>
-        <Text style={styles.icon}>⏳</Text>
-        <Text style={styles.title}>Waiting for Partner</Text>
-        <Text style={styles.subtitle}>You've completed the {category.name} quiz! We'll let you know when {activeCouple?.partner.first_name || 'your partner'} finishes.</Text>
-        <View style={styles.buttonContainer}>
+        <View style={styles.cardContentWrapper}>
+          <Text style={styles.icon}>⏳</Text>
+          <Text style={styles.title}>Waiting for Partner</Text>
+          <Text style={styles.subtitle}>You've completed the {category.name} quiz! We'll let you know when {activeCouple?.partner.first_name || 'your partner'} finishes.</Text>
           <GradientButton title="Refresh Status" onPress={refreshQuizData} style={styles.button} />
           <GradientButton title="Back to Quizzes" onPress={handleReturnToQuiz} style={styles.secondaryButton} />
         </View>
@@ -152,9 +153,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   card: {
-    padding: SPACING.xl,
-    alignItems: "center",
     width: "100%",
+  },
+  cardContentWrapper: {
+    width: "100%",
+    alignItems: "center",
+    padding: SPACING.xl,
   },
   loader: {
     marginBottom: SPACING.lg,
@@ -178,18 +182,15 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     alignSelf: "center",
   },
-  buttonContainer: {
-    width: '100%',
-    maxWidth: 300,
-    alignItems: 'center',
-  },
   button: {
-    width: "100%",
+    width: "90%",
+    maxWidth: 300,
     marginTop: SPACING.sm,
     marginBottom: SPACING.md,
   },
   secondaryButton: {
-    width: "100%",
+    width: "90%",
+    maxWidth: 300,
     marginBottom: SPACING.md,
     opacity: 0.9,
   },

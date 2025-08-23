@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GlassCard } from "../components/GlassCard";
 import { QuizCard } from "../components/QuizCard";
 import { GradientButton } from "../components/GradientButton";
-import { QuizCategory } from "../types/quiz";
 import { useNavigation } from "@react-navigation/native";
 import { NavigationProp } from "../types/navigation";
 import { useAuth } from "../context/AuthContext";

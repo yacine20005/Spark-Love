@@ -1,10 +1,10 @@
 import { StackNavigationProp } from '@react-navigation/stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { CompositeNavigationProp } from '@react-navigation/native';
+import { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import { QuizCategory } from "./quiz";
 
 export type RootStackParamList = {
-  MainTabNavigator: undefined;
+  MainTabNavigator: NavigatorScreenParams<MainTabParamList>;
   AuthScreen: undefined;
   NameSetupScreen: undefined;
   QuizScreen: undefined;
@@ -15,7 +15,7 @@ export type RootStackParamList = {
     coupleId: string | null;
   };
   ComparisonScreen: { // New screen for comparing answers
-    categoryId: QuizCategory;
+    categoryId: string;
     coupleId: string;
   };
   QuizStatusScreen: { // New screen to show status/wait/compare and redo option
