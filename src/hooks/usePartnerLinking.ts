@@ -29,11 +29,12 @@ export const usePartnerLinking = () => {
     setIsLoading(true);
     setGeneratedCode('');
     try {
-      const code = await PartnerService.generateLinkingCode(user.id);
+      // The user ID is now inferred from the session on the server
+      const code = await PartnerService.generateLinkingCode();
       setGeneratedCode(code);
       setModalContent('generateCode');
     } catch (error: any) {
-      Alert.alert('Error', 'Could not generate a linking code. Please try again.');
+      Alert.alert('Error', error.message || 'Could not generate a linking code.');
       console.error('Generate code error:', error);
     } finally {
       setIsLoading(false);
@@ -60,7 +61,8 @@ export const usePartnerLinking = () => {
 
     setIsLoading(true);
     try {
-      await PartnerService.linkWithCode(cleanCode, user.id);
+      // The user ID is now inferred from the session on the server
+      await PartnerService.linkWithCode(cleanCode);
       Alert.alert('Success!', 'You have successfully linked with your partner.');
       await refreshCouples();
       setModalVisible(false);

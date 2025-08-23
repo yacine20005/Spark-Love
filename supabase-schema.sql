@@ -269,6 +269,128 @@ INSERT INTO questions (text, category_id, type, options, min_scale, max_scale, s
 
 
 --
+-- RPC FUNCTIONS
+--
+
+-- Function to generate a random 6-character alphanumeric string
+CREATE OR REPLACE FUNCTION generate_random_code()
+RETURNS TEXT AS $$
+DECLARE
+  chars TEXT[] := '{A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9}';
+  result TEXT := '';
+  i INTEGER;
+BEGIN
+  FOR i IN 1..6 LOOP
+    result := result || chars[1 + floor(random() * array_length(chars, 1))];
+  END LOOP;
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql VOLATILE;
+
+
+-- Function for a user to create a couple entry and get a linking code
+CREATE OR REPLACE FUNCTION create_couple_and_get_linking_code()
+RETURNS TEXT AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+  existing_couple RECORD;
+  new_linking_code TEXT;
+  is_code_unique BOOLEAN := false;
+BEGIN
+  -- Check if the user is already part of a fully linked couple
+  SELECT * INTO existing_couple
+  FROM public.couples
+  WHERE (user1_id = current_user_id OR user2_id = current_user_id) AND user2_id IS NOT NULL;
+
+  IF FOUND THEN
+    RAISE EXCEPTION 'User is already in a couple.';
+  END IF;
+
+  -- Check if the user already has a pending invitation
+  SELECT * INTO existing_couple
+  FROM public.couples
+  WHERE user1_id = current_user_id AND user2_id IS NULL;
+
+  IF FOUND THEN
+    -- If a pending invitation exists, return the existing code
+    RETURN existing_couple.linking_code;
+  END IF;
+
+  -- Generate a unique linking code
+  LOOP
+    new_linking_code := generate_random_code();
+    PERFORM id FROM public.couples WHERE linking_code = new_linking_code;
+    IF NOT FOUND THEN
+      EXIT; -- Exit loop if code is unique
+    END IF;
+  END LOOP;
+
+  -- Insert a new pending couple
+  INSERT INTO public.couples (user1_id, linking_code)
+  VALUES (current_user_id, new_linking_code);
+
+  RETURN new_linking_code;
+END;
+$$ LANGUAGE plpgsql SECURITY INVOKER;
+
+
+-- Function for a user to join a couple using a linking code
+CREATE OR REPLACE FUNCTION link_partner(linking_code_to_join TEXT)
+RETURNS UUID AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+  target_couple RECORD;
+  user1 UUID;
+  user2 UUID;
+BEGIN
+  -- Find the couple invitation
+  SELECT * INTO target_couple
+  FROM public.couples
+  WHERE linking_code = linking_code_to_join;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Invalid linking code.';
+  END IF;
+
+  -- Check if the invitation is still open
+  IF target_couple.user2_id IS NOT NULL THEN
+    RAISE EXCEPTION 'This invitation has already been used.';
+  END IF;
+
+  -- Prevent user from linking with themselves
+  IF target_couple.user1_id = current_user_id THEN
+    RAISE EXCEPTION 'You cannot link with yourself.';
+  END IF;
+
+  -- Check if the current user is already in another couple
+  PERFORM id FROM public.couples WHERE (user1_id = current_user_id OR user2_id = current_user_id) AND user2_id IS NOT NULL;
+  IF FOUND THEN
+      RAISE EXCEPTION 'You are already in a couple.';
+  END IF;
+
+  -- Enforce the user1_id < user2_id constraint for canonical representation
+  IF target_couple.user1_id < current_user_id THEN
+    user1 := target_couple.user1_id;
+    user2 := current_user_id;
+  ELSE
+    user1 := current_user_id;
+    user2 := target_couple.user1_id;
+  END IF;
+
+  -- Atomically update the record: set user2, clear the code, and re-order users if needed.
+  -- We delete the old record and insert a new one to reliably change the user IDs while respecting constraints.
+  DELETE FROM public.couples WHERE id = target_couple.id;
+
+  INSERT INTO public.couples (user1_id, user2_id, created_at)
+  VALUES (user1, user2, target_couple.created_at)
+  RETURNING id INTO target_couple.id;
+
+  RETURN target_couple.id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+--
 -- ROW LEVEL SECURITY
 --
 

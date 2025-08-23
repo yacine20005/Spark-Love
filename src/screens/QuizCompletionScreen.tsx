@@ -69,7 +69,9 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
           <Text style={styles.title}>Error</Text>
           <Text style={styles.subtitle}>{error || "Could not load quiz status."}</Text>
-          <GradientButton title="Back to Quizzes" onPress={handleReturnToQuiz} style={styles.button} />
+          <View style={styles.buttonContainer}>
+            <GradientButton title="Back to Quizzes" onPress={handleReturnToQuiz} style={styles.button} />
+          </View>
         </GlassCard>
       );
     }
@@ -81,7 +83,9 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
           <Text style={styles.icon}>🎉</Text>
           <Text style={styles.title}>Quiz Completed!</Text>
           <Text style={styles.subtitle}>Great job! You completed this quiz in solo mode. Your answers are saved.</Text>
-          <GradientButton title="Back to Quizzes" onPress={handleReturnToQuiz} style={styles.button} />
+          <View style={styles.buttonContainer}>
+            <GradientButton title="Back to Quizzes" onPress={handleReturnToQuiz} style={styles.button} />
+          </View>
         </GlassCard>
       );
     }
@@ -98,8 +102,10 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
           <Text style={styles.icon}>💕</Text>
           <Text style={styles.title}>You Both Finished!</Text>
           <Text style={styles.subtitle}>Perfect! You and your partner have both completed the {category.name} quiz. Ready to see how you compare?</Text>
-          <GradientButton title="Compare Answers" onPress={handleGoToComparison} style={styles.button} />
-          <GradientButton title="Later" onPress={handleReturnToQuiz} style={styles.secondaryButton} />
+          <View style={styles.buttonContainer}>
+            <GradientButton title="Compare Answers" onPress={handleGoToComparison} style={styles.button} />
+            <GradientButton title="Later" onPress={handleReturnToQuiz} style={styles.secondaryButton} />
+          </View>
         </GlassCard>
       );
     }
@@ -109,8 +115,10 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
         <Text style={styles.icon}>⏳</Text>
         <Text style={styles.title}>Waiting for Partner</Text>
         <Text style={styles.subtitle}>You've completed the {category.name} quiz! We'll let you know when {activeCouple?.partner.first_name || 'your partner'} finishes.</Text>
-        <GradientButton title="Refresh Status" onPress={refreshQuizData} style={styles.button} />
-        <GradientButton title="Back to Quizzes" onPress={handleReturnToQuiz} style={styles.secondaryButton} />
+        <View style={styles.buttonContainer}>
+          <GradientButton title="Refresh Status" onPress={refreshQuizData} style={styles.button} />
+          <GradientButton title="Back to Quizzes" onPress={handleReturnToQuiz} style={styles.secondaryButton} />
+        </View>
       </GlassCard>
     );
   };
@@ -169,6 +177,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     maxWidth: 420,
     alignSelf: "center",
+  },
+  buttonContainer: {
+    width: '100%',
+    maxWidth: 300,
+    alignItems: 'center',
   },
   button: {
     width: "100%",

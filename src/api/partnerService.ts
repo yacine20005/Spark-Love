@@ -2,83 +2,46 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Couple } from '../types/auth';
 
-// Simple 6-char uppercase alphanumeric generator (server-side)
-const generateCode = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let res = '';
-  for (let i = 0; i < 6; i++) {
-    res += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return res;
-};
-
+// The code generation logic is now handled by a Supabase RPC function.
 
 // Partner Service
 export class PartnerService {
 
   /**
-   * Generates a unique linking code and creates a pending couple entry.
-   * @param userId The ID of the user creating the code.
+   * Calls an RPC function to generate a unique linking code and create a pending couple entry.
    */
-  static async generateLinkingCode(userId: string): Promise<string> {
-    let code = generateCode();
-    let exists = true;
-    let attempts = 0;
+  static async generateLinkingCode(): Promise<string> {
+    const { data, error } = await supabase.rpc('create_couple_and_get_linking_code');
 
-    // Try up to 10 times to generate a unique code to avoid infinite loops
-    while (exists && attempts < 10) {
-      const { data } = await supabase.from('couples').select('id').eq('linking_code', code).single();
-      exists = !!data;
-      if (exists) {
-        code = generateCode();
+    if (error) {
+      // Provide a more user-friendly error message
+      if (error.message.includes('User is already in a couple')) {
+        throw new Error('You are already part of a linked couple.');
       }
-      attempts++;
+      console.error('Error generating linking code:', error);
+      throw new Error('Failed to generate a linking code. Please try again.');
     }
-
-    if (exists) {
-      throw new Error('Could not generate a unique code. Please try again.');
-    }
-
-    // Insert a pending couple row
-    const { data, error } = await supabase
-      .from('couples')
-      .insert({ user1_id: userId, linking_code: code })
-      .select('linking_code')
-      .single();
-
-    if (error) throw error;
-    return data.linking_code as string;
+    return data;
   }
 
   /**
-   * Links the current user to a partner using a linking code.
-   * This is done in a single atomic update operation to comply with RLS policies.
+   * Links the current user to a partner using a linking code via an RPC function.
    * @param linkingCode The 6-character code from the partner.
-   * @param userId The ID of the user joining.
    */
-  static async linkWithCode(linkingCode: string, userId: string): Promise<void> {
-    const { data, error } = await supabase
-      .from('couples')
-      .update({
-        user2_id: userId,
-        linking_code: null, // Nullify the code so it cannot be reused
-      })
-      .eq('linking_code', linkingCode) // Find the row by its code
-      .is('user2_id', null)           // Ensure it's an open invitation
-      .neq('user1_id', userId)         // Prevent linking to oneself
-      .select(); // No .single() - we expect an array
+  static async linkWithCode(linkingCode: string): Promise<void> {
+    const { error } = await supabase.rpc('link_partner', {
+      linking_code_to_join: linkingCode,
+    });
 
-    // Handle potential database errors (e.g., RLS violation)
     if (error) {
-      throw error;
+      // Extract a cleaner error message for the user
+      const message = error.message.includes('RAISE EXCEPTION')
+        ? error.message.split('RAISE EXCEPTION: ')[1].trim()
+        : 'An unknown error occurred.';
+      console.error('Error linking with code:', error);
+      throw new Error(message);
     }
-
-    // If the returned array is empty, it means no row was updated.
-    // This happens if the code was invalid, expired, or belonged to the user themselves.
-    if (!data || data.length === 0) {
-      throw new Error('Invalid or expired linking code.');
-    }
-    // If we reach here, the update was successful.
+    // If we reach here, the RPC was successful.
   }
 
 
