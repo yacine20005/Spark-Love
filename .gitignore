@@ -61,3 +61,6 @@ CRUSH.md
 .env.keys
 .env.local
 .env.*.local
+
+# Agents folder
+.agents/

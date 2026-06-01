@@ -8,9 +8,9 @@ export type RootStackParamList = {
   AuthScreen: undefined;
   NameSetupScreen: undefined;
   QuizScreen: undefined;
-  QuizQuestionsScreen: { category: QuizCategory };
+  QuizQuestionsScreen: { categoryId: string };
   QuizCompletionScreen: {
-    category: QuizCategory;
+    categoryId: string;
     answers: any[];
     coupleId: string | null;
   };

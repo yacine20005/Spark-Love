@@ -24,7 +24,7 @@ interface QuizQuestionsScreenProps {
 
 export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
   route,
-}) => {
+}: QuizQuestionsScreenProps) => {
   const { categoryId } = route.params;
   const { loading: contextLoading, error: contextError } = useQuiz();
   const {
@@ -99,7 +99,7 @@ export const QuizQuestionsScreen: React.FC<QuizQuestionsScreenProps> = ({
           <Text style={styles.questionText}>{question.text}</Text>
           {question.type === "multiple_choice" && question.options && (
             <View style={styles.optionsContainer}>
-              {question.options.map((opt, idx) => (
+              {(question.options as string[]).map((opt: string, idx: number) => (
                 <GradientButton
                   key={idx}
                   title={opt}

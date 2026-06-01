@@ -17,6 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NavigationProp } from "../types/navigation";
 import { useAuth } from "../context/AuthContext";
 import { useQuiz } from "../context/QuizContext";
+import { QuizCategory, QuizProgress } from "../types/quiz";
 import {
   COLORS,
   FONTS,
@@ -36,7 +37,7 @@ export const QuizScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   const handleCategoryPress = (category: QuizCategory) => {
-    const categoryProgress = progress.find(p => p.category_id === category.id);
+    const categoryProgress = progress.find((p: QuizProgress) => p.category_id === category.id);
     const isCompleted = categoryProgress && categoryProgress.questions_answered >= categoryProgress.total_questions;
 
     if (isCompleted) {
@@ -73,10 +74,10 @@ export const QuizScreen: React.FC = () => {
       );
     }
 
-    const totalAnswered = progress.reduce((sum, p) => sum + p.questions_answered, 0);
-    const totalQuestions = progress.reduce((sum, p) => sum + p.total_questions, 0);
+    const totalAnswered = progress.reduce((sum: number, p: QuizProgress) => sum + p.questions_answered, 0);
+    const totalQuestions = progress.reduce((sum: number, p: QuizProgress) => sum + p.total_questions, 0);
     const averageProgress = totalQuestions > 0 ? Math.round((totalAnswered / totalQuestions) * 100) : 0;
-    const categoriesStarted = progress.filter(p => p.questions_answered > 0).length;
+    const categoriesStarted = progress.filter((p: QuizProgress) => p.questions_answered > 0).length;
 
     return (
       <>
@@ -101,8 +102,8 @@ export const QuizScreen: React.FC = () => {
         <View style={styles.categoriesSection}>
           <Text style={styles.sectionTitle}>Available Categories</Text>
           <View style={styles.categoriesGrid}>
-            {categories.map((category) => {
-              const categoryProgress = progress.find(p => p.category_id === category.id);
+            {categories.map((category: QuizCategory) => {
+              const categoryProgress = progress.find((p: QuizProgress) => p.category_id === category.id);
               const questionsAnswered = categoryProgress?.questions_answered || 0;
               const totalQuestionsInCategory = category.questions.length;
               const percentage = totalQuestionsInCategory > 0 ? (questionsAnswered / totalQuestionsInCategory) * 100 : 0;

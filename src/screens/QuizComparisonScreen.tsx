@@ -12,13 +12,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RootStackParamList } from "../types/navigation";
 import { QuizService } from "../api/quizService";
 import { useAuth } from "../context/AuthContext";
+import { useQuiz } from "../context/QuizContext";
 import { GlassCard } from "../components/GlassCard";
 import {
   COLORS,
   FONTS,
   SPACING,
   OPACITY,
-  QUIZ_CATEGORIES,
   LAYOUT,
 } from "../constants";
 import { Question, QuizCategory } from "../types/quiz";
@@ -81,16 +81,16 @@ const AnswerRenderer = ({
 
 export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
   route,
-}) => {
+}: ComparisonScreenProps) => {
   const { categoryId, coupleId } = route.params;
   const { user, activeCouple } = useAuth();
+  const { categories } = useQuiz();
   const [comparison, setComparison] = useState<ComparisonData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
-  const categoryInfo =
-    QUIZ_CATEGORIES[categoryId as keyof typeof QUIZ_CATEGORIES];
+  const categoryInfo = categories.find((c: QuizCategory) => c.id === categoryId);
 
   useEffect(() => {
     const fetchComparison = async () => {
@@ -196,7 +196,7 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
           )}
         </View>
 
-        {comparison.map((item, index) => {
+        {comparison.map((item: ComparisonData, index: number) => {
           const areAnswersSame = item.yourAnswer === item.partnerAnswer;
           const isScaleQuestion = item.questionType === "scale";
 

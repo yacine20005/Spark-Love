@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import { GlassCard } from "../components/GlassCard";
 import { RootStackParamList } from "../types/navigation";
 import { useAuth } from "../context/AuthContext";
 import { useQuiz } from "../context/QuizContext"; // The new context
+import { QuizService } from "../api/quizService";
+import { QuizCategory, QuizProgress } from "../types/quiz";
 import { COLORS, FONTS, SPACING, OPACITY } from "../constants";
 
 type QuizCompletionScreenRouteProp = RouteProp<
@@ -27,21 +29,46 @@ interface QuizCompletionScreenProps {
 
 export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
   route,
-}) => {
-  const { category, coupleId } = route.params;
+}: QuizCompletionScreenProps) => {
+  const { categoryId, coupleId } = route.params;
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { activeCouple, user } = useAuth();
-  const { loading, error, progress, refreshQuizData } = useQuiz();
+  const { categories, loading, error, progress, refreshQuizData } = useQuiz();
+
+  const [bothCompleted, setBothCompleted] = useState(false);
+  const [checkingCompletion, setCheckingCompletion] = useState(true);
 
   // Refresh the progress data when entering this screen
   useEffect(() => {
     refreshQuizData();
   }, []);
 
-  const categoryProgress = progress.find(p => p.category_id === category.id);
+  // Fetch whether the quiz is completed by both partners
+  useEffect(() => {
+    const checkCompletion = async () => {
+      if (coupleId && categoryId) {
+        try {
+          setCheckingCompletion(true);
+          const completed = await QuizService.isQuizCompletedByBothPartners(coupleId, categoryId);
+          setBothCompleted(completed);
+        } catch (err) {
+          console.error("Error checking dual completion:", err);
+        } finally {
+          setCheckingCompletion(false);
+        }
+      } else {
+        setCheckingCompletion(false);
+      }
+    };
+
+    checkCompletion();
+  }, [coupleId, categoryId, progress]);
+
+  const category = categories.find((c: QuizCategory) => c.id === categoryId);
+  const categoryProgress = progress.find((p: QuizProgress) => p.category_id === categoryId);
 
   const handleGoToComparison = () => {
-    if (coupleId) {
+    if (coupleId && category) {
       navigation.replace("ComparisonScreen", {
         categoryId: category.id,
         coupleId: coupleId,
@@ -54,7 +81,7 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
   };
 
   const renderContent = () => {
-    if (loading) {
+    if (loading || checkingCompletion) {
       return (
         <GlassCard style={styles.card} opacity={OPACITY.glass}>
           <View style={styles.cardContentWrapper}>
@@ -91,11 +118,7 @@ export const QuizCompletionScreen: React.FC<QuizCompletionScreenProps> = ({
       );
     }
 
-    // In couple mode, we need to check the partner's progress.
-    // This logic assumes the `progress` object from the context is up-to-date for both users,
-    // which might require a more advanced real-time setup (e.g., Supabase subscriptions)
-    // For now, we rely on the refreshed data.
-    const bothCompleted = false; // This needs to be properly determined, perhaps via a dedicated API call or context update
+    // bothCompleted is determined via the state variable which fetches from the database.
 
     if (bothCompleted) {
        return (

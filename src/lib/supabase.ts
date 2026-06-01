@@ -74,13 +74,16 @@ export type Database = {
   };
 };
 
-console.log('Supabase URL:', SUPABASE_URL);
-console.log('Supabase Anon Key:', SUPABASE_ANON_KEY ? 'Loaded' : 'Not Loaded');
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '');
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || (typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '');
+
+console.log('Supabase URL:', supabaseUrl);
+console.log('Supabase Key loaded:', supabaseAnonKey ? 'Yes' : 'No');
 
 // Create Supabase client
 export const supabase = createClient<Database>(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       // Persist session using AsyncStorage to avoid SecureStore size limits

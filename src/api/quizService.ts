@@ -209,7 +209,7 @@ export class QuizService {
 
       let query = supabase
         .from('user_answers')
-        .delete()
+        .delete({ count: 'exact' })
         .in('question_id', questionIds);
 
       if (coupleId) {
@@ -220,7 +220,7 @@ export class QuizService {
         query = query.eq('user_id', userId).is('couple_id', null);
       }
 
-      const { count, error: dError } = await query.select('*', { count: 'exact', head: true });
+      const { count, error: dError } = await query;
 
       if (dError) {
         console.error('Error deleting answers:', dError);
