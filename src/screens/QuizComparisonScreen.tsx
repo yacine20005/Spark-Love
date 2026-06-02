@@ -3,12 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { RouteProp } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { RootStackParamList } from "../types/navigation";
 import { QuizService } from "../api/quizService";
 import { useAuth } from "../context/AuthContext";
@@ -174,7 +173,7 @@ export const ComparisonScreen: React.FC<ComparisonScreenProps> = ({
   const partnerName = activeCouple?.partner?.first_name || "Partner";
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

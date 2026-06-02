@@ -4,11 +4,11 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { GradientButton } from "../components/GradientButton";
 import { GlassCard } from "../components/GlassCard";
@@ -78,7 +78,7 @@ export const AuthScreen: React.FC = () => {
               />
               <Text style={styles.infoText}>
                 {
-                  "We'll send you a 6-digit code to sign in or create your account."
+                  "We'll send you a verification code to sign in or create your account."
                 }
               </Text>
             </>
@@ -89,22 +89,22 @@ export const AuthScreen: React.FC = () => {
               </Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter 6-digit code"
+                placeholder="Enter verification code"
                 placeholderTextColor={COLORS.textSecondary}
                 value={otpCode}
                 onChangeText={setOtpCode}
                 keyboardType="number-pad"
-                maxLength={6}
+                maxLength={8}
                 textAlign="center"
               />
               <GradientButton
                 title={loading ? "Verifying..." : "Verify Code"}
                 onPress={verifyOtp}
-                disabled={loading || otpCode.length !== 6}
+                disabled={loading || otpCode.trim().length < 6 || otpCode.trim().length > 8}
                 style={styles.button}
               />
               <Text style={styles.infoText}>
-                Enter the 6-digit code from your email.
+                Enter the verification code from your email.
               </Text>
               <GradientButton
                 title="Resend Code"

@@ -45,13 +45,18 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
-      style={[styles.container, buttonSize[size], style]}
+      style={[
+        styles.container,
+        !disabled && SHADOWS.medium,
+        disabled && styles.disabledContainer,
+        style,
+      ]}
       activeOpacity={0.8}
     >
       <LinearGradient
         colors={
           disabled
-            ? [COLORS.textTertiary, COLORS.textTertiary]
+            ? [COLORS.surfaceContainer, COLORS.surfaceContainer]
             : (gradient as any)
         }
         style={[styles.gradient, buttonSize[size]]}
@@ -76,8 +81,15 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     borderRadius: SIZES.radius,
-    overflow: "hidden",
-    ...SHADOWS.medium,
+    backgroundColor: COLORS.surface, // Perfect solid backing for Android shadow silhouette
+    borderWidth: 0, // Explicitly reset border to prevent layout bleed on state transition
+  },
+  disabledContainer: {
+    borderWidth: 1,
+    borderColor: COLORS.outlineVariant,
+    elevation: 0,
+    shadowOpacity: 0,
+    backgroundColor: COLORS.surfaceContainer,
   },
   gradient: {
     alignItems: "center",
@@ -85,6 +97,7 @@ const styles = StyleSheet.create({
     borderRadius: SIZES.radius,
   },
   text: {
+    fontFamily: FONTS.button.fontFamily,
     color: COLORS.textPrimary,
     fontWeight: "600",
     textAlign: "center",

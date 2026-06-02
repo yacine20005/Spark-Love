@@ -14,6 +14,17 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
+import {
+  Quicksand_500Medium,
+  Quicksand_600SemiBold,
+  Quicksand_700Bold,
+} from "@expo-google-fonts/quicksand";
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+} from "@expo-google-fonts/plus-jakarta-sans";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { COLORS } from "./src/constants/colors";
@@ -35,6 +46,13 @@ export default function App() {
         Poppins_500Medium,
         Poppins_600SemiBold,
         Poppins_700Bold,
+        Quicksand_500Medium,
+        Quicksand_600SemiBold,
+        Quicksand_700Bold,
+        PlusJakartaSans_400Regular,
+        PlusJakartaSans_500Medium,
+        PlusJakartaSans_600SemiBold,
+        PlusJakartaSans_700Bold,
       });
       setFontsLoaded(true);
     }

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, SafeAreaView, StatusBar } from "react-native";
+import { View, Text, StyleSheet, StatusBar } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GlassCard } from "../components/GlassCard";
 import { useNavigation } from "@react-navigation/native";
@@ -12,7 +12,7 @@ export const DatesScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar
         barStyle="light-content"
         backgroundColor="transparent"
@@ -37,7 +37,7 @@ export const DatesScreen: React.FC = () => {
           </Text>
         </GlassCard>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

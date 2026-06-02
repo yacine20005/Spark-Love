@@ -4,13 +4,13 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { GradientButton } from "../components/GradientButton";
 import { GlassCard } from "../components/GlassCard";

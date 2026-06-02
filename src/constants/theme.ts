@@ -8,8 +8,8 @@ export const SIZES = {
   medium: 16,
   large: 18,
   extraLarge: 24,
-  padding: 15,
-  radius: 12,
+  padding: 20, // Generous padding for Soft-Tactile feel
+  radius: 24, // Rounded xl for soft touch (24px)
   
   // Screen dimensions
   width: 375,
@@ -17,47 +17,47 @@ export const SIZES = {
 } as const;
 
 export const FONTS = {
-  largeTitle: { fontSize: 40, fontWeight: 'bold' as const },
-  h1: { fontSize: 30, fontWeight: 'bold' as const },
-  h2: { fontSize: 22, fontWeight: 'bold' as const },
-  h3: { fontSize: 20, fontWeight: 'bold' as const },
-  h4: { fontSize: 18, fontWeight: 'bold' as const },
-  body1: { fontSize: 16, fontWeight: 'normal' as const },
-  body2: { fontSize: 14, fontWeight: 'normal' as const },
-  body3: { fontSize: 12, fontWeight: 'normal' as const },
-  button: { fontSize: 16, fontWeight: '600' as const },
-  caption: { fontSize: 12, fontWeight: 'normal' as const },
+  largeTitle: { fontFamily: 'Quicksand_700Bold', fontSize: 40, fontWeight: '700' as const },
+  h1: { fontFamily: 'Quicksand_700Bold', fontSize: 30, fontWeight: '700' as const },
+  h2: { fontFamily: 'Quicksand_600SemiBold', fontSize: 22, fontWeight: '600' as const },
+  h3: { fontFamily: 'Quicksand_600SemiBold', fontSize: 20, fontWeight: '600' as const },
+  h4: { fontFamily: 'Quicksand_600SemiBold', fontSize: 18, fontWeight: '600' as const },
+  body1: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 16, fontWeight: '400' as const },
+  body2: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14, fontWeight: '400' as const },
+  body3: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12, fontWeight: '400' as const },
+  button: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 16, fontWeight: '600' as const },
+  caption: { fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, fontWeight: '500' as const },
 } as const;
 
 export const SHADOWS = {
   light: {
-    shadowColor: COLORS.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  medium: {
-    shadowColor: COLORS.shadow,
+    shadowColor: '#4a154b', // Deep violet tint
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.30,
-    shadowRadius: 4.65,
+    shadowOpacity: 0.04,
+    shadowRadius: 15,
+    elevation: 3,
+  },
+  medium: {
+    shadowColor: '#4a154b', // Deep violet tint
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 30,
     elevation: 8,
   },
   dark: {
-    shadowColor: COLORS.shadow,
+    shadowColor: '#4a154b',
     shadowOffset: {
       width: 0,
-      height: 8,
+      height: 15,
     },
-    shadowOpacity: 0.44,
-    shadowRadius: 10.32,
+    shadowOpacity: 0.12,
+    shadowRadius: 40,
     elevation: 16,
   },
 } as const;
