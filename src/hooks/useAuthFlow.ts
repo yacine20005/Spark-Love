@@ -115,6 +115,31 @@ export const useAuthFlow = () => {
     setOtpCode('');
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const { error } = await AuthService.signInWithGoogle();
+      if (error) {
+        // Exclude user cancellations or generic failed messages from prompting error alerts
+        const isCancellation = 
+          error.message?.includes('cancelled') || 
+          error.message?.includes('failed') || 
+          error.message?.includes('dismissed');
+
+        if (!isCancellation) {
+          Alert.alert('Google Sign-In Error', error.message);
+        }
+      } else {
+        Alert.alert('Success!', 'Logged in with Google successfully.');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', 'An unexpected error occurred during Google Sign-In.');
+      console.error('Google Auth flow error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     email,
     setEmail,
@@ -127,6 +152,7 @@ export const useAuthFlow = () => {
     verifyOtp,
     resendConfirmationEmail,
     resetAuthFlow,
+    handleGoogleSignIn,
   };
 };
 

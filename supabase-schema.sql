@@ -417,6 +417,7 @@ CREATE POLICY "Allow public read access to questions"
 DROP POLICY IF EXISTS "Allow public read access to profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Allow individual user to update their own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Allow individual user to read their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Allow individual user to insert their own profile" ON public.profiles;
 
 CREATE POLICY "Allow public read access to profiles"
   ON public.profiles FOR SELECT
@@ -429,6 +430,10 @@ CREATE POLICY "Allow individual user to read their own profile"
 CREATE POLICY "Allow individual user to update their own profile"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Allow individual user to insert their own profile"
+  ON public.profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 
 -- Policies for `couples`

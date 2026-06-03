@@ -34,18 +34,18 @@ export const NameSetupScreen: React.FC = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: user.id,
           first_name: firstName.trim(),
-          last_name: lastName.trim()
-        })
-        .eq('id', user.id);
+          last_name: lastName.trim(),
+          updated_at: new Date().toISOString()
+        });
 
       if (error) throw error;
 
       await refreshProfile();
-    } catch (e) {
-      Alert.alert('Error', 'Failed to save your information. Please try again.');
-      console.error(e);
+    } catch (e: any) {
+      Alert.alert('Error', `Failed to save your information: ${e.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
