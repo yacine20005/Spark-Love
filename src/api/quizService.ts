@@ -233,4 +233,28 @@ export class QuizService {
       throw error;
     }
   }
+
+  /**
+   * Checks if the partner has answered a specific question.
+   */
+  static async hasPartnerAnsweredQuestion(
+    coupleId: string,
+    partnerId: string,
+    questionId: string
+  ): Promise<boolean> {
+    try {
+      const { count, error } = await supabase
+        .from('user_answers')
+        .select('*', { count: 'exact', head: true })
+        .eq('couple_id', coupleId)
+        .eq('user_id', partnerId)
+        .eq('question_id', questionId);
+
+      if (error) throw error;
+      return (count || 0) > 0;
+    } catch (e) {
+      console.error('Error checking partner answer:', e);
+      return false;
+    }
+  }
 }

@@ -171,19 +171,26 @@ export const PartnerLinkingSection: React.FC<PartnerLinkingModalProps> = ({ visi
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(28, 28, 23, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+    padding: SPACING.lg,
   },
   sectionContainer: {
     width: '100%',
+    maxWidth: 400,
   },
   keyboardAvoidingView: {
     width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sectionBackground: {
     width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 1)',
-    borderRadius: 15,
-    padding: 1,
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   sectionCard: {
     width: '100%',
@@ -217,15 +224,16 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 50,
     borderWidth: 1,
-    borderColor: COLORS.textSecondary,
-    borderRadius: 10,
+    borderColor: 'rgba(28, 28, 23, 0.08)',
+    borderRadius: 12,
     padding: SPACING.md,
     color: COLORS.textPrimary,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: COLORS.surfaceContainerLow,
     fontSize: 20,
     textAlign: 'center',
     marginBottom: SPACING.lg,
     letterSpacing: 4,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
   },
   modalSeparator: {
     ...FONTS.h3,
@@ -234,12 +242,12 @@ const styles = StyleSheet.create({
   },
   codeContainer: {
     width: '100%',
-    padding: SPACING.xl,
+    padding: SPACING.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.textSecondary,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(28, 28, 23, 0.08)',
+    borderRadius: 12,
+    backgroundColor: COLORS.surfaceContainerLow,
   },
   generatedCode: {
     ...FONTS.largeTitle,

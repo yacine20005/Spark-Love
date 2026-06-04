@@ -470,3 +470,106 @@ CREATE POLICY "Allow user to see their own answers"
 CREATE POLICY "Allow user to insert their own answers"
   ON public.user_answers FOR INSERT
   WITH CHECK (auth.uid() = user_id);
+
+-- Create `movies` table
+CREATE TABLE public.movies (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  genre TEXT NOT NULL,
+  year INTEGER NOT NULL,
+  duration TEXT NOT NULL,
+  poster_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- Create `movie_swipes` table
+CREATE TABLE public.movie_swipes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  couple_id UUID REFERENCES public.couples(id) ON DELETE CASCADE NOT NULL,
+  movie_id UUID REFERENCES public.movies(id) ON DELETE CASCADE NOT NULL,
+  swipe_type TEXT NOT NULL CHECK (swipe_type IN ('like', 'dislike', 'super_like')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+  CONSTRAINT unique_user_movie_swipe UNIQUE (user_id, movie_id)
+);
+
+-- Create `journal_entries` table
+CREATE TABLE public.journal_entries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  couple_id UUID REFERENCES public.couples(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  entry_type TEXT NOT NULL CHECK (entry_type IN ('sync', 'memory', 'note')),
+  title TEXT,
+  content TEXT NOT NULL,
+  image_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- Enable RLS
+ALTER TABLE public.movies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.movie_swipes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.journal_entries ENABLE ROW LEVEL SECURITY;
+
+-- Policies for `movies`
+DROP POLICY IF EXISTS "Allow public read access to movies" ON public.movies;
+CREATE POLICY "Allow public read access to movies"
+  ON public.movies FOR SELECT
+  USING (true);
+
+-- Policies for `movie_swipes`
+DROP POLICY IF EXISTS "Allow users to see swipes in their couple" ON public.movie_swipes;
+CREATE POLICY "Allow users to see swipes in their couple"
+  ON public.movie_swipes FOR SELECT
+  USING (
+    auth.uid() IN (
+      SELECT user1_id FROM public.couples WHERE id = couple_id
+      UNION
+      SELECT user2_id FROM public.couples WHERE id = couple_id
+    )
+  );
+
+DROP POLICY IF EXISTS "Allow individual user to insert their own swipes" ON public.movie_swipes;
+CREATE POLICY "Allow individual user to insert their own swipes"
+  ON public.movie_swipes FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Allow individual user to update their own swipes" ON public.movie_swipes;
+CREATE POLICY "Allow individual user to update their own swipes"
+  ON public.movie_swipes FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Policies for `journal_entries`
+DROP POLICY IF EXISTS "Allow couple members to read journal entries" ON public.journal_entries;
+CREATE POLICY "Allow couple members to read journal entries"
+  ON public.journal_entries FOR SELECT
+  USING (
+    auth.uid() IN (
+      SELECT user1_id FROM public.couples WHERE id = couple_id
+      UNION
+      SELECT user2_id FROM public.couples WHERE id = couple_id
+    )
+  );
+
+DROP POLICY IF EXISTS "Allow couple members to insert journal entries" ON public.journal_entries;
+CREATE POLICY "Allow couple members to insert journal entries"
+  ON public.journal_entries FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id AND
+    auth.uid() IN (
+      SELECT user1_id FROM public.couples WHERE id = couple_id
+      UNION
+      SELECT user2_id FROM public.couples WHERE id = couple_id
+    )
+  );
+
+-- Seed Movies
+INSERT INTO public.movies (title, description, genre, year, duration, poster_url) VALUES
+('The Notebook', 'A poor yet passionate young man falls in love with a rich young woman, giving her a sense of freedom, but they are soon separated because of their social differences.', 'Romance', 2004, '2h 3m', 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbSPBxsaCciTqFkLWQQmLUkDUAFN6Gc9WLIk0R2fIahyZ_vW70owrFC0uqYnoT6yftAUP-h7AFxwK-wDrcmGAJdHBeLLyLDYOIySYLnslF7Q666a1lynrfd2IGl2BcsLXF60aBar3Nbgg_uYrqKOB45rZnNsVdt14E4sMbJTuAzXtPXG0xb8lFq0To2rPTcaoqLmIruaiez7mC-NB-8iMpqQujhbaAVpNaIcQjX5mVgeqsJ1EiJyVlvkjNzYpyM28YATWshwwLRwE'),
+('About Time', 'At the age of 21, Tim discovers he can travel in time and change what happens and has happened in his own life. His decision to make his world a better place by getting a girlfriend turns out to be not as easy as you might think.', 'Romance/Comedy', 2013, '2h 3m', 'https://lh3.googleusercontent.com/aida-public/AB6AXuBInrrv5B2u0GMty3ZaErqfbf8cS4qZMR12hi4fpaaoE3jWEfRg5-seTAYWg-TgcXe2GiF14_04UTg3IjHKpWB9rZxW5H6kQqQnfdT2I6bhTgnnij6HBtUnzQxB41NDI23sjEDpDRH3hWIijbfzACG-tz-L5y9hIrSkT6QAW-5RioIcLkmGuKYTskRxzdXfM00RvCKuEWwKW_KWSqxJZuGlTJ92uPDR46ZiHwgSZuNw8nryE7Z0yk19PwdKUnl2Yxsf6tQS36KIScA'),
+('La La Land', 'While navigating their careers in Los Angeles, a pianist and an actress fall in love while attempting to reconcile their aspirations for the future.', 'Romance/Musical', 2016, '2h 8m', 'https://lh3.googleusercontent.com/aida-public/AB6AXuCMkmt0U1kpGwH-A_RiLRkurpxb9jPCdyniDbVIr_sGNNPAi9ooGi-gtKHzP5ilwSjylrIYKJDcQwZdyxhKYNuo1sFAqsbeOnQDRLchJPG7-VDBNaI9uGuvkrw-xq98l3gbw7nNUVHB85mxUh3g5-fR-b6PQFwQAuA6wHhGuQ7R_pT352xRXu5JAaChzbr3uwrfLaBvpux8SmXclJYoJZvqBb2mqK_6w7kmdSnD26V6ZZxfq2C-IkYGI3q34xjpsaZH2LNuSQThYWQ'),
+('Before Sunrise', 'A young man and woman meet on a train in Europe, and wind up spending one evening together in Vienna. Unfortunately, both know that this will probably be their only night together.', 'Romance/Drama', 1995, '1h 41m', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDWsET8DDhs6lk9Qdi6UeRHNFztDZp1KPDXDCxzA215bePrL1sOnfRooCkQgx8k_mlH_UiW6nXu17YgnxTodVeM5mQlNMq1IH59SMmvUF3oYepRhaAV5IORAw3mrkpA8feXfIX1vOMaEqN7HRbOb9NQjAmx0aVbHI9ZV218jrJlQ3egL4vYSgykfSfjm3RAvbGHSQSvmEFXP8hOVJZBsh_1N87CITRDd14N4BEWkx321xsE97sHC47urvZ6SJ2m_iZz5qROJe9HcbY'),
+('Amélie', 'Amélie is an innocent and naive girl in Paris with her own sense of justice. She decides to help those around her and, along the way, discovers love.', 'Romance/Comedy', 2001, '2h 2m', 'https://lh3.googleusercontent.com/aida-public/AB6AXuD7D4c6RC5U0cXxAl0S7TcUgwrZ0kZ1hiXawyN9LlR1SwCzMjzpitasjy3c06wVifDPRDPZjsFtshNeLFfvWg2b7vrmFBciqu5HHpEIioFF2ID_O0AjxNOVSMkOAbyB1AutdpoYf3jsUJ5PsSkJdF1amlwgwkmRX9l6aY6mG_n9n9-6uWZCsVtY3_ElPrfCzYPiH0Ie1qqLY5wluOnbLWq90_63rbp-qYq7neT1I03SomtDSAzsh2vUPM3LfiYzj4Ldgohz4P3zzW8')
+ON CONFLICT DO NOTHING;
+

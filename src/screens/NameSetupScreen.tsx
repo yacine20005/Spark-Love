@@ -59,7 +59,7 @@ export const NameSetupScreen: React.FC = () => {
         translucent
       />
       <LinearGradient
-        colors={GRADIENTS.background as [string, string, ...string[]]}
+        colors={GRADIENTS.background}
         style={styles.backgroundGradient}
       />
       <KeyboardAvoidingView

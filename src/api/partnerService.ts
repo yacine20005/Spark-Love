@@ -51,7 +51,7 @@ export class PartnerService {
     try {
       const { data: coupleData, error: coupleError } = await supabase
         .from('couples')
-        .select('id, user1_id, user2_id')
+        .select('id, user1_id, user2_id, created_at')
         .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
         .not('user2_id', 'is', null);
 
@@ -83,6 +83,7 @@ export class PartnerService {
             last_name: partnerProfile?.last_name || null,
             email: 'null', // The email is stored in the auth table in supabase
           },
+          created_at: c.created_at,
         };
       });
 

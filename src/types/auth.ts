@@ -11,6 +11,7 @@ export interface Profile {
 export interface Couple {
   id: string; // The ID of the couple entry
   partner: Profile & { email?: string };
+  created_at?: string; // Date the couple was connected in the DB
 }
 
 export interface AuthContextType {

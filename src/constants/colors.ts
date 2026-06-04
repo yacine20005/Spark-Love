@@ -49,12 +49,12 @@ export const COLORS = {
 } as const;
 
 export const GRADIENTS = {
-  primary: [COLORS.primary, '#ff8e8e'] as string[],
-  secondary: [COLORS.secondary, COLORS.primary] as string[],
-  background: [COLORS.background, COLORS.surfaceContainerLow] as string[],
-  card: ['#ffffff', '#fdf9f0'] as string[],
-  love: [COLORS.heart, COLORS.love] as string[],
-  sunset: ['#ff6b6b', '#ffd93d'] as string[], // Spark to Golden match
-  movie: ['#4a154b', '#844981'] as string[], // Romantic deep purple gradient for movies
-  dates: ['#9c4143', '#e87b7c'] as string[], // Rose red gradient for dates
-};
+  primary: [COLORS.primary, '#ff8e8e'] as const,
+  secondary: [COLORS.secondary, COLORS.primary] as const,
+  background: [COLORS.background, COLORS.surfaceContainerLow] as const,
+  card: ['#ffffff', '#fdf9f0'] as const,
+  love: [COLORS.heart, COLORS.love] as const,
+  sunset: ['#ff6b6b', '#ffd93d'] as const, // Spark to Golden match
+  movie: ['#4a154b', '#844981'] as const, // Romantic deep purple gradient for movies
+  dates: ['#9c4143', '#e87b7c'] as const, // Rose red gradient for dates
+} as const;

@@ -1,6 +1,7 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { HomeScreen } from "../screens/HomeScreen";
 import { QuizScreen } from "../screens/QuizScreen";
 import { JournalScreen } from "../screens/JournalScreen";
@@ -17,29 +18,32 @@ const TabBarIcon: React.FC<{ name: string; focused: boolean }> = ({
   name,
   focused,
 }) => {
-  const getIcon = (tabName: string) => {
+  const getIconName = (tabName: string, isFocused: boolean): keyof typeof Ionicons.glyphMap => {
     switch (tabName) {
       case "Home":
-        return "🏠";
+        return isFocused ? "home" : "home-outline";
       case "Quiz":
-        return "💕";
+        return isFocused ? "heart" : "heart-outline";
       case "Journal":
-        return "📖";
+        return isFocused ? "book" : "book-outline";
       case "Movies":
-        return "🎬";
+        return isFocused ? "film" : "film-outline";
       case "Dates":
-        return "📅";
+        return isFocused ? "calendar" : "calendar-outline";
       case "Profile":
-        return "👤";
+        return isFocused ? "person" : "person-outline";
       default:
-        return "❓";
+        return "help-circle-outline";
     }
   };
 
   return (
-    <Text style={{ fontSize: 24, opacity: focused ? 1 : 0.6 }}>
-      {getIcon(name)}
-    </Text>
+    <Ionicons
+      name={getIconName(name, focused)}
+      size={24}
+      color={focused ? COLORS.primary : COLORS.textSecondary}
+      style={{ opacity: focused ? 1 : 0.7 }}
+    />
   );
 };
 

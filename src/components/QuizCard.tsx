@@ -45,7 +45,12 @@ export const QuizCard: React.FC<QuizCardProps> = ({
           )}
         </View>
 
-        <Text style={[styles.title, isLocked && styles.lockedText]}>
+        <Text
+          style={[styles.title, isLocked && styles.lockedText]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+        >
           {category.name}
         </Text>
 

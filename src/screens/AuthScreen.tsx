@@ -24,7 +24,7 @@ export const AuthScreen: React.FC = () => {
         translucent
       />
       <LinearGradient
-        colors={GRADIENTS.background as [string, string, ...string[]]}
+        colors={GRADIENTS.background}
         style={styles.backgroundGradient}
       />
       <View style={styles.content}>
