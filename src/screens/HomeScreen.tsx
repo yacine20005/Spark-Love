@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { fetchJournal, fetchTodaySparks } from '../api/journal';
@@ -9,7 +8,7 @@ import { daysSince } from '../lib/dates';
 import { sparkForDate } from '../lib/spark';
 import { useLoader } from '../lib/useLoader';
 import type { TabProps } from '../navigation/types';
-import { Avatar, Button, Card, colors, ErrorState, Loading, radius, Screen, space, Text } from '../ui';
+import { Avatar, Button, Card, colors, ErrorState, Loading, radius, Screen, SectionHead, Side, space, Stripe, Text, TrackRow } from '../ui';
 import { LinkPanel } from './LinkPanel';
 
 export function HomeScreen({ navigation }: TabProps<'Home'>) {
@@ -18,12 +17,15 @@ export function HomeScreen({ navigation }: TabProps<'Home'>) {
 
   const header = (
     <View style={styles.header}>
-      <View style={{ flex: 1 }}>
-        <Text variant="title">Hi, {me.display_name}</Text>
+      <View style={{ flex: 1, gap: space.xs }}>
+        <Text variant="display">Hi, {me.display_name}</Text>
         {linked && couple?.together_since ? (
-          <Text variant="bodyMuted">
-            You and {partner?.display_name}, day {daysSince(couple.together_since) + 1}
-          </Text>
+          <View style={styles.counterRow}>
+            <Text variant="bodyMuted">You and {partner?.display_name}</Text>
+            <View style={styles.counter} accessibilityLabel={`Day ${daysSince(couple.together_since) + 1} together`}>
+              <Text variant="counter">DAY {String(daysSince(couple.together_since) + 1).padStart(4, '0')}</Text>
+            </View>
+          </View>
         ) : null}
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel="Open profile" onPress={() => navigation.navigate('Profile')} hitSlop={8}>
@@ -74,57 +76,36 @@ function LinkedHome({ header, prompt, navigation }: { header: React.ReactNode; p
         <Loading />
       ) : (
         <>
-          <Card style={[styles.spark, { gap: space.md }]}>
-            <View style={styles.row}>
-              <Ionicons name="sparkles" size={18} color={colors.onPrimary} />
-              <Text variant="label" color={colors.onPrimary}>
-                Today's spark
-              </Text>
+          <View style={styles.spark}>
+            <Stripe />
+            <View style={styles.sparkBody}>
+              <Text variant="title" accessibilityLabel={`Today's spark: ${prompt}`}>{prompt}</Text>
+              <Side side="A" who="You" locked={!data.mine}>
+                {data.mine?.body ?? 'Your side is still blank.'}
+              </Side>
+              <Side side="B" who={partner?.display_name ?? 'Partner'} locked={!data.mine || !data.theirs}>
+                {!data.theirs
+                  ? `${partner?.display_name} hasn't answered yet.`
+                  : !data.mine
+                    ? `${partner?.display_name} already answered. Answer to flip the tape.`
+                    : data.theirs.body}
+              </Side>
+              {!data.mine && (
+                <Button title="Answer" icon="pencil" onPress={() => navigation.navigate('Compose', { kind: 'spark', prompt })} />
+              )}
             </View>
-            <Text variant="title" color={colors.onPrimary}>
-              {prompt}
-            </Text>
-            {data.mine ? (
-              <View style={{ gap: space.sm }}>
-                <SparkAnswer who="You" body={data.mine.body} />
-                <SparkAnswer
-                  who={partner?.display_name ?? 'Partner'}
-                  body={data.theirs?.body ?? `Hasn't answered yet. You'll see it here when they do.`}
-                  muted={!data.theirs}
-                />
-              </View>
-            ) : (
-              <>
-                <Text variant="body" color={colors.onPrimary} style={{ opacity: 0.9 }}>
-                  {data.theirs
-                    ? `${partner?.display_name} already answered. Answer to see theirs.`
-                    : 'Answer first and surprise your partner.'}
-                </Text>
-                <Button
-                  title="Answer"
-                  variant="secondary"
-                  onPress={() => navigation.navigate('Compose', { kind: 'spark', prompt })}
-                />
-              </>
-            )}
-          </Card>
-
-          <View style={styles.stats}>
-            <Card style={styles.stat} onPress={() => navigation.navigate('Quizzes')} accessibilityLabel="Open quizzes">
-              <Ionicons name="help-circle-outline" size={22} color={colors.plum} />
-              <Text variant="title">{data.quizzesTogether}</Text>
-              <Text variant="caption">quizzes done together</Text>
-            </Card>
-            <Card style={styles.stat} onPress={() => navigation.navigate('Match')} accessibilityLabel="Open match">
-              <Ionicons name="heart-outline" size={22} color={colors.primary} />
-              <Text variant="title">{data.matches}</Text>
-              <Text variant="caption">things you both want to do</Text>
-            </Card>
           </View>
 
-          <Text variant="heading" style={{ marginTop: space.sm }}>
-            Latest memory
-          </Text>
+          <View>
+            <Pressable accessibilityRole="button" accessibilityLabel="Open quizzes" onPress={() => navigation.navigate('Quizzes')}>
+              <TrackRow label="Quizzes finished together" value={data.quizzesTogether} />
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Open match" onPress={() => navigation.navigate('Match')}>
+              <TrackRow label="Things you both want to do" value={data.matches} />
+            </Pressable>
+          </View>
+
+          <SectionHead>Latest memory</SectionHead>
           {data.memory ? (
             <Card onPress={() => navigation.navigate('Journal')} style={{ padding: 0, overflow: 'hidden' }} accessibilityLabel="Open journal">
               {data.memory.photoUrl && (
@@ -158,23 +139,11 @@ function LinkedHome({ header, prompt, navigation }: { header: React.ReactNode; p
   );
 }
 
-function SparkAnswer({ who, body, muted }: { who: string; body: string; muted?: boolean }) {
-  return (
-    <View style={styles.answer}>
-      <Text variant="caption" color={colors.textMuted}>
-        {who}
-      </Text>
-      <Text variant={muted ? 'bodyMuted' : 'body'}>{body}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.xs },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  spark: { backgroundColor: colors.plum, padding: space.lg - 4 },
-  answer: { backgroundColor: colors.surface, borderRadius: radius.md, padding: space.md - 4, gap: 2 },
-  stats: { flexDirection: 'row', gap: space.md },
-  stat: { flex: 1, gap: space.xs },
+  header: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, marginBottom: space.sm },
+  counterRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
+  counter: { borderWidth: 1, borderColor: colors.text, borderRadius: radius.sm, paddingHorizontal: 6, paddingVertical: 2 },
+  spark: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  sparkBody: { padding: space.md, gap: space.md - 4 },
   photo: { width: '100%', aspectRatio: 16 / 10, backgroundColor: colors.surfaceMuted },
 });

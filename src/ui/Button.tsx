@@ -18,7 +18,7 @@ type Props = {
 const palette: Record<Variant, { bg: string; fg: string; border?: string }> = {
   primary: { bg: colors.primary, fg: colors.onPrimary },
   secondary: { bg: colors.surface, fg: colors.text, border: colors.border },
-  ghost: { bg: 'transparent', fg: colors.primary },
+  ghost: { bg: 'transparent', fg: colors.text },
   danger: { bg: 'transparent', fg: colors.danger, border: colors.border },
 };
 
@@ -34,7 +34,7 @@ export function Button({ title, onPress, variant = 'primary', icon, loading, dis
       style={({ pressed }) => [
         styles.base,
         { backgroundColor: p.bg, borderColor: p.border ?? p.bg, borderWidth: p.border ? 1 : 0 },
-        pressed && { opacity: 0.8 },
+        pressed && { opacity: 0.85, transform: [{ translateY: 1 }] },
         disabled && { opacity: 0.45 },
         style,
       ]}

@@ -8,7 +8,7 @@ import { celebrate } from '../lib/haptics';
 import type { SwipeItem, SwipeKind } from '../lib/types';
 import { useLoader } from '../lib/useLoader';
 import type { TabProps } from '../navigation/types';
-import { Button, Card, colors, EmptyState, ErrorState, Loading, radius, Screen, space, Text } from '../ui';
+import { Button, Card, colors, EmptyState, ErrorState, Loading, radius, Screen, space, Stamp, Text } from '../ui';
 import { NeedsPartner } from './NeedsPartner';
 import { SwipeDeck } from './SwipeDeck';
 
@@ -121,15 +121,10 @@ function Match({ navigation }: TabProps<'Match'>) {
         )}
         {matched && (
           <Card style={styles.banner} accessibilityLiveRegion="polite">
-            <Ionicons name="heart" size={22} color={colors.onPrimary} />
-            <View style={{ flex: 1 }}>
-              <Text variant="label" color={colors.onPrimary}>
-                It's a match
-              </Text>
-              <Text variant="body" color={colors.onPrimary}>
-                You and {partner?.display_name} both want {matched.title}.
-              </Text>
-            </View>
+            <Stamp label="Match" tilt={-6} />
+            <Text variant="body" style={{ flex: 1 }}>
+              You and {partner?.display_name} both want <Text variant="label">{matched.title}</Text>.
+            </Text>
           </Card>
         )}
       </View>
@@ -144,8 +139,8 @@ function Match({ navigation }: TabProps<'Match'>) {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center' },
   matchesLink: { flexDirection: 'row', alignItems: 'center', gap: space.xs, padding: space.sm, minHeight: 44 },
-  segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.md, padding: 4 },
+  segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.md, padding: 3 },
   segmentItem: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm },
   segmentActive: { backgroundColor: colors.surface },
-  banner: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', gap: space.md },
+  banner: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, flexDirection: 'row', alignItems: 'center', gap: space.md, borderColor: colors.sideA },
 });

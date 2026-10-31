@@ -1,15 +1,21 @@
 import { View } from 'react-native';
 import { Text } from './Text';
-import { colors } from './theme';
+import { colors, radius } from './theme';
 
-export function Avatar({ name, size = 40, tone = 'primary' }: { name?: string | null; size?: number; tone?: 'primary' | 'plum' }) {
-  const bg = tone === 'plum' ? colors.plumSoft : colors.primarySoft;
-  const fg = tone === 'plum' ? colors.plum : colors.primary;
+/** Side marker: me is side A (vermilion), my partner is side B (blue). */
+export function Avatar({ name, size = 40, side = 'A' }: { name?: string | null; size?: number; side?: 'A' | 'B' }) {
   return (
     <View
-      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: radius.md,
+        backgroundColor: side === 'B' ? colors.sideB : colors.sideA,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
     >
-      <Text variant="label" color={fg} style={{ fontSize: size * 0.42, lineHeight: size * 0.5 }}>
+      <Text variant="title" color={colors.onPrimary} style={{ fontSize: size * 0.55, lineHeight: size * 0.62 }}>
         {(name?.trim()[0] ?? '?').toUpperCase()}
       </Text>
     </View>

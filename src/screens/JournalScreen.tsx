@@ -6,7 +6,7 @@ import { useHousehold } from '../context/session';
 import { confirm, errorMessage, notify } from '../lib/feedback';
 import { useLoader } from '../lib/useLoader';
 import type { TabProps } from '../navigation/types';
-import { Button, Card, colors, EmptyState, ErrorState, Loading, Screen, space, Text } from '../ui';
+import { Avatar, Button, Card, colors, EmptyState, ErrorState, Loading, Screen, Side, space, Text } from '../ui';
 import { NeedsPartner } from './NeedsPartner';
 
 export function JournalScreen(props: TabProps<'Journal'>) {
@@ -32,7 +32,7 @@ function Journal({ navigation }: TabProps<'Journal'>) {
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
       <View style={styles.header}>
-        <Text variant="title" style={{ flex: 1 }}>
+        <Text variant="display" style={{ flex: 1 }}>
           Journal
         </Text>
         <Button title="New" icon="add" onPress={() => navigation.navigate('Compose', { kind: 'memory' })} style={styles.new} />
@@ -49,26 +49,39 @@ function Journal({ navigation }: TabProps<'Journal'>) {
           action={{ title: 'Write the first entry', onPress: () => navigation.navigate('Compose', { kind: 'memory' }) }}
         />
       ) : (
-        data.map((e) => {
+        groupSparks(data).map((item) => {
+          if (item.type === 'spark') {
+            const [a, b] = [item.entries.find((e) => e.user_id === me.id), item.entries.find((e) => e.user_id !== me.id)];
+            return (
+              <Card key={item.key} style={{ gap: space.sm }}>
+                <Text variant="heading">{item.prompt}</Text>
+                {a && <Side side="A" who="You">{a.body}</Side>}
+                {b && <Side side="B" who={partner?.display_name ?? 'Partner'}>{b.body}</Side>}
+                <View style={styles.meta}>
+                  <Text variant="caption" style={{ flex: 1 }}>
+                    Daily spark · {formatDay(item.entries[0].created_at)}
+                  </Text>
+                  {a && (
+                    <Pressable accessibilityRole="button" accessibilityLabel="Delete my answer" onPress={() => remove(a)} hitSlop={12}>
+                      <Ionicons name="trash-outline" size={18} color={colors.textSubtle} />
+                    </Pressable>
+                  )}
+                </View>
+              </Card>
+            );
+          }
+          const e = item.entry;
           const mine = e.user_id === me.id;
           return (
             <Card key={e.id} style={{ padding: 0, overflow: 'hidden' }}>
               {e.photoUrl && <Image source={{ uri: e.photoUrl }} style={styles.photo} contentFit="cover" transition={200} />}
               <View style={{ padding: space.md, gap: space.xs }}>
-                {e.kind === 'spark' && (
-                  <View style={styles.kind}>
-                    <Ionicons name="sparkles" size={14} color={colors.plum} />
-                    <Text variant="caption" color={colors.plum}>
-                      Daily spark
-                    </Text>
-                  </View>
-                )}
                 {e.title && <Text variant="heading">{e.title}</Text>}
                 <Text variant="body">{e.body}</Text>
                 <View style={styles.meta}>
+                  <Avatar name={mine ? me.display_name : partner?.display_name} side={mine ? 'A' : 'B'} size={22} />
                   <Text variant="caption" style={{ flex: 1 }}>
-                    {mine ? 'You' : partner?.display_name} ·{' '}
-                    {new Date(e.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {mine ? 'You' : partner?.display_name} · {formatDay(e.created_at)}
                   </Text>
                   {mine && (
                     <Pressable accessibilityRole="button" accessibilityLabel="Delete entry" onPress={() => remove(e)} hitSlop={12}>
@@ -85,10 +98,36 @@ function Journal({ navigation }: TabProps<'Journal'>) {
   );
 }
 
+type Item =
+  | { type: 'entry'; entry: EntryWithPhoto }
+  | { type: 'spark'; key: string; prompt: string; entries: EntryWithPhoto[] };
+
+/** Both answers to the same day's spark read as one tape: side A and side B. */
+function groupSparks(entries: EntryWithPhoto[]): Item[] {
+  const items: Item[] = [];
+  const sparks = new Map<string, Extract<Item, { type: 'spark' }>>();
+  for (const e of entries) {
+    if (e.kind !== 'spark') {
+      items.push({ type: 'entry', entry: e });
+      continue;
+    }
+    const key = `${new Date(e.created_at).toDateString()}|${e.title}`;
+    const group = sparks.get(key);
+    if (group) group.entries.push(e);
+    else {
+      const created = { type: 'spark' as const, key, prompt: e.title ?? "Today's spark", entries: [e] };
+      sparks.set(key, created);
+      items.push(created);
+    }
+  }
+  return items;
+}
+
+const formatDay = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center' },
   new: { minHeight: 40, paddingHorizontal: space.md },
   photo: { width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.surfaceMuted },
-  kind: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  meta: { flexDirection: 'row', alignItems: 'center', marginTop: space.xs },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.xs },
 });

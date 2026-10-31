@@ -92,5 +92,5 @@ export function QuizSessionScreen({ route, navigation }: StackProps<'QuizSession
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: space.sm },
   track: { height: 6, borderRadius: radius.pill, backgroundColor: colors.surfaceMuted, overflow: 'hidden' },
-  fill: { height: '100%', backgroundColor: colors.primary, borderRadius: radius.pill },
+  fill: { height: '100%', backgroundColor: colors.sideA, borderRadius: radius.pill },
 });

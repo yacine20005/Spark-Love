@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { compareCategory, fetchProgress, fetchQuestions, resetMyAnswers } from '../api/quiz';
@@ -7,7 +6,7 @@ import { alignmentScore, isAligned } from '../lib/answers';
 import { confirm, errorMessage, notify } from '../lib/feedback';
 import { useLoader } from '../lib/useLoader';
 import type { StackProps } from '../navigation/types';
-import { Button, Card, colors, EmptyState, ErrorState, Loading, radius, Screen, space, Text } from '../ui';
+import { Button, Card, colors, EmptyState, ErrorState, Loading, Screen, Side, space, Stamp, Text } from '../ui';
 
 function verdict(score: number) {
   if (score >= 80) return 'You think remarkably alike here.';
@@ -73,15 +72,15 @@ export function QuizResultsScreen({ route, navigation }: StackProps<'QuizResults
   return (
     <Screen edges={['bottom']} footer={footer}>
       {score !== null && (
-        <Card style={styles.score}>
-          <Text variant="display" color={colors.plum}>
+        <View style={styles.score}>
+          <Text variant="display" style={styles.scoreNum}>
             {score}%
           </Text>
-          <View style={{ flex: 1 }}>
-            <Text variant="label">in agreement</Text>
-            <Text variant="bodyMuted">{verdict(score)}</Text>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="tag">In agreement</Text>
+            <Text variant="body">{verdict(score)}</Text>
           </View>
-        </Card>
+        </View>
       )}
       {data.rows.map(({ question, mine, partner: theirs }) => {
         const aligned = isAligned(question, mine, theirs);
@@ -91,17 +90,10 @@ export function QuizResultsScreen({ route, navigation }: StackProps<'QuizResults
               <Text variant="label" style={{ flex: 1 }}>
                 {question.text}
               </Text>
-              {aligned !== null && (
-                <Ionicons
-                  name={aligned ? 'checkmark-circle' : 'swap-horizontal'}
-                  size={20}
-                  color={aligned ? colors.success : colors.textSubtle}
-                  accessibilityLabel={aligned ? 'Same answer' : 'Different answers'}
-                />
-              )}
+              {aligned && <Stamp label={mine === theirs ? 'Same' : 'Close'} color={colors.success} tilt={4} />}
             </View>
-            <Answer who="You" value={mine} tone="primary" />
-            <Answer who={partner?.display_name ?? 'Partner'} value={theirs} tone="plum" />
+            <Side side="A" who="You">{mine}</Side>
+            <Side side="B" who={partner?.display_name ?? 'Partner'}>{theirs}</Side>
           </Card>
         );
       })}
@@ -109,19 +101,8 @@ export function QuizResultsScreen({ route, navigation }: StackProps<'QuizResults
   );
 }
 
-function Answer({ who, value, tone }: { who: string; value: string; tone: 'primary' | 'plum' }) {
-  return (
-    <View style={[styles.answer, { backgroundColor: tone === 'plum' ? colors.plumSoft : colors.primarySoft }]}>
-      <Text variant="caption" color={colors.textMuted}>
-        {who}
-      </Text>
-      <Text variant="body">{value}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  score: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  score: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
+  scoreNum: { fontSize: 64, lineHeight: 64, paddingTop: 4 },
   qRow: { flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' },
-  answer: { borderRadius: radius.md, padding: space.md - 4, gap: 2 },
 });

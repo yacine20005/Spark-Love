@@ -60,7 +60,7 @@ export function ProfileScreen({ navigation }: StackProps<'Profile'>) {
     <Screen edges={['bottom']}>
       <View style={styles.identity}>
         <Avatar name={me.display_name} size={64} />
-        {linked && <Avatar name={partner?.display_name} size={64} tone="plum" />}
+        {linked && <Avatar name={partner?.display_name} size={64} side="B" />}
       </View>
 
       <Card style={{ gap: space.md }}>

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { fetchMatches } from '../api/swipe';
 import { useLoader } from '../lib/useLoader';
 import type { StackProps } from '../navigation/types';
-import { Card, colors, EmptyState, ErrorState, Loading, Screen, space, Text } from '../ui';
+import { Card, colors, EmptyState, ErrorState, Loading, Screen, SectionHead, space, Stamp, Text } from '../ui';
 
 export function MatchesScreen({ navigation }: StackProps<'Matches'>) {
   const { data, error, reload, refreshing, refresh } = useLoader(fetchMatches, []);
@@ -28,16 +28,17 @@ export function MatchesScreen({ navigation }: StackProps<'Matches'>) {
       ) : (
         sections.map((s) => (
           <View key={s.title} style={{ gap: space.sm }}>
-            <Text variant="heading">{s.title}</Text>
+            <SectionHead>{s.title}</SectionHead>
             {s.items.map((i) => (
               <Card key={i.id} style={styles.row}>
-                <Ionicons name={i.icon as keyof typeof Ionicons.glyphMap} size={24} color={i.kind === 'movie' ? colors.plum : colors.primary} />
+                <Ionicons name={i.icon as keyof typeof Ionicons.glyphMap} size={24} color={colors.text} />
                 <View style={{ flex: 1 }}>
                   <Text variant="label">{i.title}</Text>
                   <Text variant="bodyMuted" numberOfLines={2}>
                     {i.description}
                   </Text>
                 </View>
+                <Stamp label="Match" tilt={-4} />
               </Card>
             ))}
           </View>

@@ -17,7 +17,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { QuizResultsScreen } from '../screens/QuizResultsScreen';
 import { QuizSessionScreen } from '../screens/QuizSessionScreen';
 import { QuizzesScreen } from '../screens/QuizzesScreen';
-import { colors, Loading, type } from '../ui';
+import { colors, fonts, Loading } from '../ui';
 import type { StackParams, TabParams } from './types';
 
 const Stack = createNativeStackNavigator<StackParams>();
@@ -25,7 +25,7 @@ const Tab = createBottomTabNavigator<TabParams>();
 
 const theme: Theme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, primary: colors.primary, background: colors.background, card: colors.surface, text: colors.text, border: colors.border },
+  colors: { ...DefaultTheme.colors, primary: colors.sideA, background: colors.background, card: colors.background, text: colors.text, border: colors.border },
 };
 
 const tabIcons: Record<keyof TabParams, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
@@ -40,11 +40,11 @@ function Tabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.sideA,
         tabBarInactiveTintColor: colors.textSubtle,
-        tabBarLabelStyle: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 },
+        tabBarLabelStyle: { fontFamily: fonts.label, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase' },
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
           borderTopColor: colors.border,
           ...(Platform.OS === 'web' && { height: 60, paddingBottom: 8 }),
         },
@@ -73,7 +73,7 @@ export function RootNavigator() {
         screenOptions={{
           headerShadowVisible: false,
           headerStyle: { backgroundColor: colors.background },
-          headerTitleStyle: { ...type.heading },
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 22, color: colors.text },
           headerTintColor: colors.text,
           headerBackButtonDisplayMode: 'minimal',
           contentStyle: { backgroundColor: colors.background },

@@ -78,7 +78,7 @@ export function QuestionInput({ question: q, value, onChange }: Props) {
             <Ionicons
               name={selected ? 'radio-button-on' : 'radio-button-off'}
               size={22}
-              color={selected ? colors.primary : colors.textSubtle}
+              color={selected ? colors.sideA : colors.textSubtle}
             />
           </Pressable>
         );
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  selected: { backgroundColor: colors.sideA, borderColor: colors.sideA },
   labels: { flexDirection: 'row', justifyContent: 'space-between' },
   option: {
     flexDirection: 'row',
@@ -112,5 +112,5 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  optionSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  optionSelected: { borderColor: colors.sideA, backgroundColor: colors.sideASoft },
 });

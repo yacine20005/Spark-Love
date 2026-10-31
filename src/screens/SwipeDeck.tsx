@@ -3,7 +3,7 @@ import { useMemo, useRef } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { tap } from '../lib/haptics';
 import type { SwipeItem } from '../lib/types';
-import { colors, radius, shadow, space, Text } from '../ui';
+import { colors, radius, space, Stamp, Stripe, Text } from '../ui';
 
 const THRESHOLD = 110;
 const native = Platform.OS !== 'web';
@@ -58,15 +58,11 @@ export function SwipeDeck({ items, onSwipe }: Props) {
           style={[styles.card, { transform: [{ translateX: pan.x }, { translateY: pan.y }, { rotate }] }]}
         >
           <CardBody item={top} />
-          <Animated.View style={[styles.stamp, styles.like, { opacity: likeOpacity }]}>
-            <Text variant="label" color={colors.success}>
-              Yes please
-            </Text>
+          <Animated.View style={[styles.stamp, { left: space.lg, opacity: likeOpacity }]}>
+            <Stamp label="Yes please" color={colors.success} tilt={-8} />
           </Animated.View>
-          <Animated.View style={[styles.stamp, styles.pass, { opacity: passOpacity }]}>
-            <Text variant="label" color={colors.textMuted}>
-              Not for us
-            </Text>
+          <Animated.View style={[styles.stamp, { right: space.lg, opacity: passOpacity }]}>
+            <Stamp label="Not for us" color={colors.textMuted} tilt={8} />
           </Animated.View>
         </Animated.View>
       </View>
@@ -79,11 +75,11 @@ export function SwipeDeck({ items, onSwipe }: Props) {
 }
 
 function CardBody({ item }: { item: SwipeItem }) {
-  const plum = item.kind === 'movie';
   return (
-    <View style={{ flex: 1, gap: space.md }}>
-      <View style={[styles.art, { backgroundColor: plum ? colors.plumSoft : colors.primarySoft }]}>
-        <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={64} color={plum ? colors.plum : colors.primary} />
+    <View style={{ flex: 1, gap: space.md - 4 }}>
+      <View style={styles.art}>
+        <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={56} color={colors.text} />
+        <Stripe style={styles.artStripe} />
       </View>
       <Text variant="title">{item.title}</Text>
       <Text variant="bodyMuted">{item.description}</Text>
@@ -118,27 +114,27 @@ const styles = StyleSheet.create({
   card: {
     ...StyleSheet.absoluteFill,
     backgroundColor: colors.surface,
-    borderRadius: radius.lg + 8,
-    padding: space.lg - 4,
-    ...shadow,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: space.md,
   },
   behind: { transform: [{ scale: 0.95 }, { translateY: 14 }], opacity: 0.7 },
-  art: { height: 160, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
+  art: { height: 150, borderRadius: radius.md, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', marginBottom: space.xs },
+  artStripe: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2 },
-  tag: { backgroundColor: colors.surfaceMuted, borderRadius: radius.pill, paddingHorizontal: space.sm + 2, paddingVertical: 4 },
-  stamp: { position: 'absolute', top: space.lg, borderWidth: 2, borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: 4, backgroundColor: colors.surface },
-  like: { left: space.lg, borderColor: colors.success, transform: [{ rotate: '-8deg' }] },
-  pass: { right: space.lg, borderColor: colors.textSubtle, transform: [{ rotate: '8deg' }] },
+  tag: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: 3 },
+  stamp: { position: 'absolute', top: space.lg, backgroundColor: colors.surface },
   buttons: { flexDirection: 'row', justifyContent: 'center', gap: space.xl },
   round: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  roundPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
+  roundPrimary: { backgroundColor: colors.sideA, borderColor: colors.sideA },
 });

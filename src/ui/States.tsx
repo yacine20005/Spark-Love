@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Button } from './Button';
 import { Text } from './Text';
-import { colors, space } from './theme';
+import { colors, radius, space } from './theme';
 
 type EmptyProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -15,9 +15,9 @@ export function EmptyState({ icon, title, body, action }: EmptyProps) {
   return (
     <View style={styles.center}>
       <View style={styles.iconWrap}>
-        <Ionicons name={icon} size={28} color={colors.primary} />
+        <Ionicons name={icon} size={26} color={colors.text} />
       </View>
-      <Text variant="heading" center>
+      <Text variant="title" center>
         {title}
       </Text>
       {body && (
@@ -54,8 +54,10 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primarySoft,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: space.xs,

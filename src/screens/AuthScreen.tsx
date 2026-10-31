@@ -1,11 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { errorMessage } from '../lib/feedback';
 import { supabase } from '../lib/supabase';
-import { Button, colors, Screen, space, Text, TextField } from '../ui';
+import { Button, Screen, Stripe, Text, TextField, colors, space } from '../ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -64,14 +63,16 @@ export function AuthScreen() {
   return (
     <Screen edges={['top', 'bottom']}>
       <View style={styles.hero}>
-        <View style={styles.mark}>
-          <Ionicons name="heart" size={36} color={colors.onPrimary} />
-        </View>
-        <Text variant="display" center>
-          Spark Love
+        <Stripe style={styles.stripe} />
+        <Text variant="display" style={styles.wordmark}>
+          Spark{'\n'}Love
         </Text>
-        <Text variant="bodyMuted" center style={{ maxWidth: 300 }}>
-          A small, private space for the two of you: quizzes, a shared journal and things to do together.
+        <View style={styles.sides}>
+          <Text variant="tag" color={colors.sideA}>Side A · you</Text>
+          <Text variant="tag" color={colors.sideB}>Side B · them</Text>
+        </View>
+        <Text variant="bodyMuted" style={{ maxWidth: 320 }}>
+          Answer on your own, then flip the tape and hear theirs. Daily questions, quizzes, swipes and a journal only the two of you can open.
         </Text>
       </View>
 
@@ -133,17 +134,10 @@ export function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: { alignItems: 'center', gap: space.sm, paddingTop: space.xxl, paddingBottom: space.xl },
-  mark: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space.sm,
-    transform: [{ rotate: '-6deg' }],
-  },
+  hero: { gap: space.md - 4, paddingTop: space.xl, paddingBottom: space.lg },
+  stripe: { width: 96 },
+  wordmark: { fontSize: 76, lineHeight: 70, paddingTop: 6, letterSpacing: -0.5 },
+  sides: { flexDirection: 'row', gap: space.md },
   form: { gap: space.md },
   divider: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   line: { flex: 1, height: 1, backgroundColor: colors.border },

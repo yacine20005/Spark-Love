@@ -15,7 +15,7 @@
       "package": "app.sparklove",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#C2413F"
+        "backgroundColor": "#C2381F"
       }
     },
     "web": {
@@ -31,7 +31,7 @@
         {
           "image": "./assets/splash-icon.png",
           "imageWidth": 160,
-          "backgroundColor": "#FDF9F0"
+          "backgroundColor": "#F1EADB"
         }
       ],
       [

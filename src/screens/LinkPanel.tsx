@@ -4,7 +4,7 @@ import { Platform, Share, StyleSheet, View } from 'react-native';
 import { createInvite, joinCouple } from '../api/couple';
 import { useHousehold } from '../context/session';
 import { errorMessage } from '../lib/feedback';
-import { Button, Card, colors, radius, space, Text, TextField } from '../ui';
+import { Button, Card, colors, fonts, radius, space, Text, TextField } from '../ui';
 
 /** Create/share an invite code, or join with your partner's. */
 export function LinkPanel({ onLinked }: { onLinked?: () => void }) {
@@ -103,10 +103,12 @@ export function LinkPanel({ onLinked }: { onLinked?: () => void }) {
 
 const styles = StyleSheet.create({
   codeBox: {
-    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.text,
     borderRadius: radius.md,
     paddingVertical: space.md,
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
-  code: { fontFamily: 'Quicksand_700Bold', fontSize: 34, lineHeight: 40, letterSpacing: 8, color: colors.primary },
+  code: { fontFamily: fonts.display, fontSize: 44, lineHeight: 48, letterSpacing: 10, color: colors.text },
 });
