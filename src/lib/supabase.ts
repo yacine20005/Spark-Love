@@ -1,96 +1,30 @@
-import { createClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@env';
-import { QuizCategory } from '../types/quiz';
+import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createClient } from '@supabase/supabase-js';
+import { AppState, Platform } from 'react-native';
+import type { Database } from './database.types';
 
-// AsyncStorage adapter to match Supabase storage interface
-const AsyncStorageAdapter = {
-  getItem: (key: string) => AsyncStorage.getItem(key),
-  setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
-  removeItem: (key: string) => AsyncStorage.removeItem(key),
-};
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-// Types for Supabase - updated for new schema
-export type Database = {
-  public: {
-    Tables: {
-      questions: {
-        Row: any; // Keeping it simple for now
-      };
-      couples: {
-        Row: {
-          id: string;
-          user1_id: string;
-          user2_id: string | null;
-          linking_code: string | null;
-        };
-        Insert: {
-          user1_id: string;
-          linking_code: string;
-        };
-        Update: {
-          user2_id?: string;
-          linking_code?: string | null;
-        };
-      };
-      user_answers: {
-        Row: {
-          id: string;
-          user_id: string;
-          question_id: string;
-          couple_id: string | null;
-          answer: string;
-        };
-        Insert: {
-          user_id: string;
-          question_id: string;
-          couple_id: string | null;
-          answer: string;
-        }[]; // Expect an array for upserting
-      };
-    };
-    Functions: {
-      create_couple_and_get_code: {
-        Args: {};
-        Returns: string;
-      };
-      link_partner: {
-        Args: { p_linking_code: string };
-        Returns: string; // couple_id
-      };
-      get_my_couples: {
-        Args: {};
-        Returns: Array<{ couple_id: string; partner_id: string; partner_email: string | null }>
-      };
-      reset_couple_quiz_answers: {
-        Args: { p_couple_id: string; p_category: QuizCategory };
-        Returns: number;
-      };
-      is_quiz_completed_by_both_partners: {
-        Args: { p_couple_id: string; p_category: QuizCategory };
-        Returns: boolean;
-      };
-    };
-  };
-};
+if (!url || !key) {
+  throw new Error('Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Copy .env.example to .env.');
+}
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '');
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || (typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '');
+export const supabase = createClient<Database>(url, key, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: Platform.OS === 'web',
+    flowType: 'pkce',
+  },
+});
 
-console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Key loaded:', supabaseAnonKey ? 'Yes' : 'No');
-
-// Create Supabase client
-export const supabase = createClient<Database>(
-  supabaseUrl,
-  supabaseAnonKey,
-  {
-    auth: {
-      // Persist session using AsyncStorage to avoid SecureStore size limits
-      storage: AsyncStorageAdapter,
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: false,
-    },
-  }
-);
+// Native apps must pause token refresh in the background (see Supabase RN guide).
+if (Platform.OS !== 'web') {
+  AppState.addEventListener('change', (state) => {
+    if (state === 'active') supabase.auth.startAutoRefresh();
+    else supabase.auth.stopAutoRefresh();
+  });
+}

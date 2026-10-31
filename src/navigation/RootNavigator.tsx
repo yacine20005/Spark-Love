@@ -1,45 +1,103 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import { MainTabNavigator } from './MainTabNavigator';
+import { Ionicons } from '@expo/vector-icons';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { DefaultTheme, NavigationContainer, type Theme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
+import { useSession } from '../context/session';
 import { AuthScreen } from '../screens/AuthScreen';
-import { NameSetupScreen } from '../screens/NameSetupScreen';
-import { QuizScreen } from '../screens/QuizScreen';
-import { QuizQuestionsScreen } from '../screens/QuizQuestionsScreen';
-import { QuizCompletionScreen } from '../screens/QuizCompletionScreen';
-import { ComparisonScreen } from '../screens/QuizComparisonScreen';
-import { useAuth } from '../context/AuthContext';
-import { RootStackParamList } from '../types/navigation';
+import { ComposeScreen } from '../screens/ComposeScreen';
+import { HomeScreen } from '../screens/HomeScreen';
+import { JournalScreen } from '../screens/JournalScreen';
+import { LinkScreen } from '../screens/LinkScreen';
+import { MatchesScreen } from '../screens/MatchesScreen';
+import { MatchScreen } from '../screens/MatchScreen';
+import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
+import { QuizResultsScreen } from '../screens/QuizResultsScreen';
+import { QuizSessionScreen } from '../screens/QuizSessionScreen';
+import { QuizzesScreen } from '../screens/QuizzesScreen';
+import { colors, Loading, type } from '../ui';
+import type { StackParams, TabParams } from './types';
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<StackParams>();
+const Tab = createBottomTabNavigator<TabParams>();
 
-export const RootNavigator: React.FC = () => {
-  const { user, profile, loading } = useAuth();
+const theme: Theme = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, primary: colors.primary, background: colors.background, card: colors.surface, text: colors.text, border: colors.border },
+};
 
-  if (loading) {
-    return null; // Or a loading spinner
-  }
+const tabIcons: Record<keyof TabParams, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
+  Home: ['home', 'home-outline'],
+  Quizzes: ['help-circle', 'help-circle-outline'],
+  Match: ['heart', 'heart-outline'],
+  Journal: ['book', 'book-outline'],
+};
+
+function Tabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSubtle,
+        tabBarLabelStyle: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12 },
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          ...(Platform.OS === 'web' && { height: 60, paddingBottom: 8 }),
+        },
+        tabBarIcon: ({ focused, color, size }) => (
+          <Ionicons name={tabIcons[route.name][focused ? 0 : 1]} color={color} size={size} />
+        ),
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Quizzes" component={QuizzesScreen} />
+      <Tab.Screen name="Match" component={MatchScreen} />
+      <Tab.Screen name="Journal" component={JournalScreen} />
+    </Tab.Navigator>
+  );
+}
+
+const linking = { prefixes: [Linking.createURL('/')] };
+
+export function RootNavigator() {
+  const { session, household, booting } = useSession();
+  if (booting || (session && !household)) return <Loading />;
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {user ? (
-          // Check if user has completed their profile setup
-          profile && profile.first_name && profile.last_name ? (
-            <>
-              <Stack.Screen name="MainTabNavigator" component={MainTabNavigator} />
-              <Stack.Screen name="QuizScreen" component={QuizScreen} />
-              <Stack.Screen name="QuizQuestionsScreen" component={QuizQuestionsScreen} />
-              <Stack.Screen name="QuizCompletionScreen" component={QuizCompletionScreen} />
-              <Stack.Screen name="ComparisonScreen" component={ComparisonScreen} />
-            </>
-          ) : (
-            <Stack.Screen name="NameSetupScreen" component={NameSetupScreen} />
-          )
+    <NavigationContainer theme={theme} linking={linking}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { ...type.heading },
+          headerTintColor: colors.text,
+          headerBackButtonDisplayMode: 'minimal',
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
+        {!session ? (
+          <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
+        ) : !household?.me.display_name ? (
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         ) : (
-          <Stack.Screen name="AuthScreen" component={AuthScreen} />
+          <>
+            <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
+            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+            <Stack.Screen name="Link" component={LinkScreen} options={{ title: 'Link your partner' }} />
+            <Stack.Screen name="QuizSession" component={QuizSessionScreen} options={({ route }) => ({ title: route.params.name })} />
+            <Stack.Screen name="QuizResults" component={QuizResultsScreen} options={({ route }) => ({ title: route.params.name })} />
+            <Stack.Screen name="Matches" component={MatchesScreen} options={{ title: 'Your matches' }} />
+            <Stack.Screen name="Compose" component={ComposeScreen} options={({ route }) => ({
+                title: route.params.kind === 'spark' ? "Today's spark" : 'New entry',
+                presentation: 'modal',
+              })} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
-};
+}

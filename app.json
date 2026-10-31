@@ -8,22 +8,39 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "app.sparklove",
+      "supportsTablet": false
     },
     "android": {
+      "package": "app.sparklove",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#C2413F"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
-      "expo-secure-store",
       "expo-font",
-      "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-image",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "backgroundColor": "#FDF9F0"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Spark Love uses your photos so you can add memories to your shared journal.",
+          "cameraPermission": false
+        }
+      ]
     ]
   }
 }
