@@ -2,18 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { addEntry } from '../api/journal';
 import { useHousehold } from '../context/session';
 import { errorMessage } from '../lib/feedback';
 import type { StackProps } from '../navigation/types';
-import { Button, colors, radius, Screen, space, Text, TextField } from '../ui';
+import { Button, makeStyles, radius, Screen, space, Text, TextField, useTheme } from '../ui';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 type Photo = { uri: string; base64: string; mimeType: string };
 
 export function ComposeScreen({ route, navigation }: StackProps<'Compose'>) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { kind, prompt } = route.params;
   const spark = kind === 'spark';
   const { me, couple } = useHousehold();
@@ -102,7 +104,7 @@ export function ComposeScreen({ route, navigation }: StackProps<'Compose'>) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   picker: {
     height: 140,
     borderRadius: radius.lg,
@@ -126,4 +128,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+}));

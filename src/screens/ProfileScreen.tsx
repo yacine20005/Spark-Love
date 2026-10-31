@@ -6,9 +6,16 @@ import { parseISODate } from '../lib/dates';
 import { confirm, errorMessage, notify } from '../lib/feedback';
 import { supabase } from '../lib/supabase';
 import type { StackProps } from '../navigation/types';
-import { Avatar, Button, Card, colors, Screen, space, Text, TextField } from '../ui';
+import { Avatar, Button, Card, Screen, Segmented, space, Text, TextField, useTheme, type ThemePreference } from '../ui';
+
+const APPEARANCE: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
 
 export function ProfileScreen({ navigation }: StackProps<'Profile'>) {
+  const { colors, preference, setPreference } = useTheme();
   const { me, couple, partner, linked, refresh } = useHousehold();
   const [name, setName] = useState(me.display_name ?? '');
   const [since, setSince] = useState(couple?.together_since ?? '');
@@ -93,6 +100,11 @@ export function ProfileScreen({ navigation }: StackProps<'Profile'>) {
             <Button title={couple ? 'See my invite code' : 'Link your partner'} variant="secondary" onPress={() => navigation.navigate('Link')} />
           </>
         )}
+      </Card>
+
+      <Card style={{ gap: space.md }}>
+        <Text variant="heading">Appearance</Text>
+        <Segmented options={APPEARANCE} value={preference} onChange={setPreference} />
       </Card>
 
       <Button title="Sign out" variant="secondary" icon="log-out-outline" onPress={() => run(() => supabase.auth.signOut())} />

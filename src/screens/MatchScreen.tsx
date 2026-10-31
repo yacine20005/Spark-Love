@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { fetchDeck, fetchMatches, resetDeck, swipe } from '../api/swipe';
 import { useHousehold } from '../context/session';
 import { confirm, errorMessage, notify } from '../lib/feedback';
@@ -8,13 +8,13 @@ import { celebrate } from '../lib/haptics';
 import type { SwipeItem, SwipeKind } from '../lib/types';
 import { useLoader } from '../lib/useLoader';
 import type { TabProps } from '../navigation/types';
-import { Button, Card, colors, EmptyState, ErrorState, Loading, radius, Screen, space, Stamp, Text } from '../ui';
+import { Button, Card, EmptyState, ErrorState, Loading, makeStyles, Screen, Segmented, space, Stamp, Text, useTheme } from '../ui';
 import { NeedsPartner } from './NeedsPartner';
 import { SwipeDeck } from './SwipeDeck';
 
-const KINDS: { kind: SwipeKind; label: string }[] = [
-  { kind: 'movie', label: 'Movies' },
-  { kind: 'date', label: 'Date ideas' },
+const KINDS: { value: SwipeKind; label: string }[] = [
+  { value: 'movie', label: 'Movies' },
+  { value: 'date', label: 'Date ideas' },
 ];
 
 export function MatchScreen(props: TabProps<'Match'>) {
@@ -24,6 +24,8 @@ export function MatchScreen(props: TabProps<'Match'>) {
 }
 
 function Match({ navigation }: TabProps<'Match'>) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { partner } = useHousehold();
   const [kind, setKind] = useState<SwipeKind>('movie');
   const [matched, setMatched] = useState<SwipeItem | null>(null);
@@ -85,24 +87,7 @@ function Match({ navigation }: TabProps<'Match'>) {
         </Pressable>
       </View>
 
-      <View style={styles.segment} accessibilityRole="tablist">
-        {KINDS.map((k) => {
-          const active = k.kind === kind;
-          return (
-            <Pressable
-              key={k.kind}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: active }}
-              onPress={() => setKind(k.kind)}
-              style={[styles.segmentItem, active && styles.segmentActive]}
-            >
-              <Text variant="label" color={active ? colors.text : colors.textSubtle}>
-                {k.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <Segmented options={KINDS} value={kind} onChange={setKind} />
 
       <View style={{ flex: 1 }}>
         {deck.error ? (
@@ -136,11 +121,8 @@ function Match({ navigation }: TabProps<'Match'>) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: { flexDirection: 'row', alignItems: 'center' },
   matchesLink: { flexDirection: 'row', alignItems: 'center', gap: space.xs, padding: space.sm, minHeight: 44 },
-  segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.md, padding: 3 },
-  segmentItem: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm },
-  segmentActive: { backgroundColor: colors.surface },
   banner: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, flexDirection: 'row', alignItems: 'center', gap: space.md, borderColor: colors.sideA },
-});
+}));

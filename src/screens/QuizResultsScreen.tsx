@@ -6,7 +6,7 @@ import { alignmentScore, isAligned } from '../lib/answers';
 import { confirm, errorMessage, notify } from '../lib/feedback';
 import { useLoader } from '../lib/useLoader';
 import type { StackProps } from '../navigation/types';
-import { Button, Card, colors, EmptyState, ErrorState, Loading, Screen, Side, space, Stamp, Text } from '../ui';
+import { Button, Card, EmptyState, ErrorState, Loading, Screen, Side, space, Stamp, Text, useTheme } from '../ui';
 
 function verdict(score: number) {
   if (score >= 80) return 'You think remarkably alike here.';
@@ -15,6 +15,7 @@ function verdict(score: number) {
 }
 
 export function QuizResultsScreen({ route, navigation }: StackProps<'QuizResults'>) {
+  const { colors } = useTheme();
   const { categoryId, name } = route.params;
   const { partner } = useHousehold();
   const [resetting, setResetting] = useState(false);

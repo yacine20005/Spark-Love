@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { deleteEntry, fetchJournal, type EntryWithPhoto } from '../api/journal';
 import { useHousehold } from '../context/session';
 import { confirm, errorMessage, notify } from '../lib/feedback';
 import { useLoader } from '../lib/useLoader';
 import type { TabProps } from '../navigation/types';
-import { Avatar, Button, Card, colors, EmptyState, ErrorState, Loading, Screen, Side, space, Text } from '../ui';
+import { Avatar, Button, Card, EmptyState, ErrorState, Loading, makeStyles, Screen, Side, space, Text, useTheme } from '../ui';
 import { NeedsPartner } from './NeedsPartner';
 
 export function JournalScreen(props: TabProps<'Journal'>) {
@@ -16,6 +16,8 @@ export function JournalScreen(props: TabProps<'Journal'>) {
 }
 
 function Journal({ navigation }: TabProps<'Journal'>) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { me, partner } = useHousehold();
   const { data, setData, error, reload, refreshing, refresh } = useLoader(() => fetchJournal(100), []);
 
@@ -125,9 +127,9 @@ function groupSparks(entries: EntryWithPhoto[]): Item[] {
 
 const formatDay = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: { flexDirection: 'row', alignItems: 'center' },
   new: { minHeight: 40, paddingHorizontal: space.md },
   photo: { width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.surfaceMuted },
   meta: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.xs },
-});
+}));

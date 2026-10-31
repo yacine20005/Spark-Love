@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "app.sparklove",
       "supportsTablet": false
@@ -31,7 +31,8 @@
         {
           "image": "./assets/splash-icon.png",
           "imageWidth": 160,
-          "backgroundColor": "#F1EADB"
+          "backgroundColor": "#F1EADB",
+          "dark": { "backgroundColor": "#15120E" }
         }
       ],
       [

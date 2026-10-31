@@ -6,16 +6,21 @@ The world lends type, palette, density and one signature move. Controls stay sta
 
 ## Palette (`src/ui/theme.ts`)
 
-| Token | Hex | Use |
-|---|---|---|
-| `background` | `#F1EADB` | J-card paper |
-| `surface` | `#F9F5EC` | Cards, inputs |
-| `surfaceMuted` | `#E7DFCD` | Pressed state, art blocks |
-| `border` | `#D3C8B2` | Hairlines, the only elevation |
-| `text` / `primary` | `#1B1814` | Ink; primary buttons are ink |
-| `sideA` | `#C2381F` | You (vermilion) |
-| `sideB` | `#2340A0` | Your partner (blue) |
-| `marigold` | `#E3A13A` | Stripe only |
+Two palettes with the same tokens. Light is the J-card on a table; dark is the same tape under a desk lamp at night: dark stock, cream print, inks lifted so they keep contrast.
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `background` | `#F1EADB` | `#15120E` | J-card stock |
+| `surface` | `#F9F5EC` | `#1F1B16` | Cards, inputs |
+| `surfaceMuted` | `#E7DFCD` | `#2A251F` | Pressed state, art blocks, tracks |
+| `border` | `#D3C8B2` | `#3B342B` | Hairlines, the only elevation |
+| `text` / `primary` | `#1B1814` | `#EFE7D6` | Ink; primary buttons are ink |
+| `sideA` | `#C2381F` | `#EE6446` | You (vermilion) |
+| `sideB` | `#2340A0` | `#86A0EE` | Your partner (blue) |
+| `onSide` | `#F9F5EC` | `#15120E` | Letters and icons on a side colour |
+| `marigold` | `#E3A13A` | `#E3A13A` | Stripe only |
+
+**Theming.** `ThemeProvider` follows the system appearance; Profile → Appearance can force Light or Dark (stored locally). Components read colours through `useTheme()` or `makeStyles((colors) => …)`, never a hard-coded hex.
 
 **Colour quarantine:** colour belongs to sides, the stripe and photos. Everything else is ink on paper. Never use `sideA`/`sideB` decoratively: red always means *you*, blue always means *them*.
 
@@ -39,4 +44,4 @@ The world lends type, palette, density and one signature move. Controls stay sta
 - Don't nest cards: `Side` has no box of its own.
 - Don't put an eyebrow or kicker above headings.
 - Lists are ruled rows, not stacks of cards (Quizzes, Matches).
-- Light appearance only, for now.
+- Text on a side colour uses `onSide`, not `onPrimary` (they differ in dark).

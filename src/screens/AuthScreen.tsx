@@ -1,16 +1,18 @@
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { errorMessage } from '../lib/feedback';
 import { supabase } from '../lib/supabase';
-import { Button, Screen, Stripe, Text, TextField, colors, space } from '../ui';
+import { Button, makeStyles, Screen, space, Stripe, Text, TextField, useTheme } from '../ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function AuthScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
@@ -133,7 +135,7 @@ export function AuthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   hero: { gap: space.md - 4, paddingTop: space.xl, paddingBottom: space.lg },
   stripe: { width: 96 },
   wordmark: { fontSize: 76, lineHeight: 70, paddingTop: 6, letterSpacing: -0.5 },
@@ -142,4 +144,4 @@ const styles = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   line: { flex: 1, height: 1, backgroundColor: colors.border },
   code: { fontSize: 24, letterSpacing: 8, textAlign: 'center' },
-});
+}));

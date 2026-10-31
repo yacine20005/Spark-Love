@@ -7,3 +7,5 @@ export { Screen } from './Screen';
 export { EmptyState, Loading, ErrorState } from './States';
 export { Avatar } from './Avatar';
 export { Stripe, Stamp, SectionHead, TrackRow, Side } from './Mixtape';
+export { ThemeProvider, useTheme, makeStyles, type ThemePreference } from './ThemeProvider';
+export { Segmented } from './Segmented';

@@ -3,9 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import { fetchMatches } from '../api/swipe';
 import { useLoader } from '../lib/useLoader';
 import type { StackProps } from '../navigation/types';
-import { Card, colors, EmptyState, ErrorState, Loading, Screen, SectionHead, space, Stamp, Text } from '../ui';
+import { Card, EmptyState, ErrorState, Loading, Screen, SectionHead, space, Stamp, Text, useTheme } from '../ui';
 
 export function MatchesScreen({ navigation }: StackProps<'Matches'>) {
+  const { colors } = useTheme();
   const { data, error, reload, refreshing, refresh } = useLoader(fetchMatches, []);
 
   if (error) return <ErrorState message={error} onRetry={reload} />;

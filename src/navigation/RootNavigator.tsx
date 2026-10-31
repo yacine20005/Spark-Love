@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { DefaultTheme, NavigationContainer, type Theme } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer, type Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
@@ -17,16 +17,13 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { QuizResultsScreen } from '../screens/QuizResultsScreen';
 import { QuizSessionScreen } from '../screens/QuizSessionScreen';
 import { QuizzesScreen } from '../screens/QuizzesScreen';
-import { colors, fonts, Loading } from '../ui';
+import { useMemo } from 'react';
+import { fonts, Loading, useTheme } from '../ui';
 import type { StackParams, TabParams } from './types';
 
 const Stack = createNativeStackNavigator<StackParams>();
 const Tab = createBottomTabNavigator<TabParams>();
 
-const theme: Theme = {
-  ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, primary: colors.sideA, background: colors.background, card: colors.background, text: colors.text, border: colors.border },
-};
 
 const tabIcons: Record<keyof TabParams, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
   Home: ['home', 'home-outline'],
@@ -36,6 +33,7 @@ const tabIcons: Record<keyof TabParams, [keyof typeof Ionicons.glyphMap, keyof t
 };
 
 function Tabs() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -64,7 +62,15 @@ function Tabs() {
 const linking = { prefixes: [Linking.createURL('/')] };
 
 export function RootNavigator() {
+  const { colors, scheme } = useTheme();
   const { session, household, booting } = useSession();
+  const theme = useMemo<Theme>(() => {
+    const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: { ...base.colors, primary: colors.sideA, background: colors.background, card: colors.background, text: colors.text, border: colors.border },
+    };
+  }, [colors, scheme]);
   if (booting || (session && !household)) return <Loading />;
 
   return (

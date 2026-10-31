@@ -1,13 +1,14 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { Platform, Share, StyleSheet, View } from 'react-native';
+import { Platform, Share, View } from 'react-native';
 import { createInvite, joinCouple } from '../api/couple';
 import { useHousehold } from '../context/session';
 import { errorMessage } from '../lib/feedback';
-import { Button, Card, colors, fonts, radius, space, Text, TextField } from '../ui';
+import { Button, Card, fonts, makeStyles, radius, space, Text, TextField } from '../ui';
 
 /** Create/share an invite code, or join with your partner's. */
 export function LinkPanel({ onLinked }: { onLinked?: () => void }) {
+  const styles = useStyles();
   const { couple, refresh } = useHousehold();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState<'create' | 'join' | null>(null);
@@ -101,7 +102,7 @@ export function LinkPanel({ onLinked }: { onLinked?: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   codeBox: {
     borderWidth: 1,
     borderColor: colors.text,
@@ -111,4 +112,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   code: { fontFamily: fonts.display, fontSize: 44, lineHeight: 48, letterSpacing: 10, color: colors.text },
-});
+}));

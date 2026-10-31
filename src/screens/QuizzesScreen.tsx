@@ -1,19 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { fetchCategories, fetchProgress } from "../api/quiz";
 import { useHousehold } from "../context/session";
 import { useLoader } from "../lib/useLoader";
 import type { TabProps } from "../navigation/types";
-import {
-  colors,
-  ErrorState,
-  Loading,
-  radius,
-  Screen,
-  space,
-  Stamp,
-  Text,
-} from "../ui";
+import { ErrorState, makeStyles, useTheme, Loading, radius, Screen, space, Stamp, Text } from "../ui";
 import { NeedsPartner } from "./NeedsPartner";
 
 export function QuizzesScreen(props: TabProps<"Quizzes">) {
@@ -26,6 +17,8 @@ export function QuizzesScreen(props: TabProps<"Quizzes">) {
 }
 
 function QuizList({ navigation }: TabProps<"Quizzes">) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { partner } = useHousehold();
   const { data, error, refreshing, refresh, reload } = useLoader(async () => {
     const [categories, progress] = await Promise.all([
@@ -115,7 +108,7 @@ function QuizList({ navigation }: TabProps<"Quizzes">) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -143,7 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceMuted,
     overflow: "hidden",
   },
-});
+}));
 
 /** How far each side of the tape has played. */
 function Meter({
@@ -155,6 +148,8 @@ function Meter({
   value: number;
   total: number;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const ink = side === "A" ? colors.sideA : colors.sideB;
   return (
     <View style={styles.meter}>

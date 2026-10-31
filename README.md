@@ -52,7 +52,7 @@ src/
   lib/             supabase client, generated DB types, pure helpers (+ tests)
   navigation/      root stack + tabs, gated by session → name → app
   screens/         one file per screen
-  ui/              theme tokens and a few primitives (Text, Button, Card, …)
+  ui/              Mixtape design system: light/dark tokens, ThemeProvider, primitives (see DESIGN.md)
 ```
 
 Design rules worth keeping:
@@ -60,6 +60,7 @@ Design rules worth keeping:
 - **Privacy lives in Postgres.** Clients can only read their own `answers` and `swipes`. Partners see each other's data only through `security definer` RPCs (`compare_category`, `swipe`, `swipe_matches`) that decide what to reveal.
 - **Couple membership only changes through RPCs** (`create_invite`, `join_couple`, `leave_couple`, `delete_account`). Column grants block clients from writing `profiles.couple_id`.
 - **Content is data.** Questions, categories and swipe items live in the DB, so they can change without shipping a new app version. Icons are Ionicons glyph names.
+- **Colours come from the theme.** Use `useTheme()` or `makeStyles((colors) => …)`; never hard-code a hex in a screen, or dark mode breaks.
 - After changing the schema: add a new migration (`bunx supabase migration new <name>`), then run `db:reset`, `db:types` and `db:test`.
 
 ## Deploying

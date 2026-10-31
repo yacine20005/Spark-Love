@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { Button } from './Button';
 import { Text } from './Text';
-import { colors, radius, space } from './theme';
+import { radius, space } from './theme';
+import { makeStyles, useTheme } from './ThemeProvider';
 
 type EmptyProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -12,6 +13,8 @@ type EmptyProps = {
 };
 
 export function EmptyState({ icon, title, body, action }: EmptyProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.center}>
       <View style={styles.iconWrap}>
@@ -31,6 +34,8 @@ export function EmptyState({ icon, title, body, action }: EmptyProps) {
 }
 
 export function Loading() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={[styles.center, { flex: 1 }]} accessibilityLabel="Loading">
       <ActivityIndicator color={colors.primary} size="large" />
@@ -49,7 +54,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   center: { alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingVertical: space.xl },
   iconWrap: {
     width: 56,
@@ -62,4 +67,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: space.xs,
   },
-});
+}));

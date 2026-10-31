@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { tap } from '../lib/haptics';
 import type { Question } from '../lib/types';
-import { colors, radius, space, Text, TextField } from '../ui';
+import { makeStyles, radius, space, Text, TextField, useTheme } from '../ui';
 
 type Props = { question: Question; value: string; onChange: (v: string) => void };
 
 export function QuestionInput({ question: q, value, onChange }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   if (q.type === 'text') {
     return (
       <TextField
@@ -41,7 +43,7 @@ export function QuestionInput({ question: q, value, onChange }: Props) {
                 }}
                 style={[styles.step, selected && styles.selected]}
               >
-                <Text variant="label" color={selected ? colors.onPrimary : colors.text}>
+                <Text variant="label" color={selected ? colors.onSide : colors.text}>
                   {n}
                 </Text>
               </Pressable>
@@ -87,7 +89,7 @@ export function QuestionInput({ question: q, value, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   scale: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   step: {
     width: 48,
@@ -113,4 +115,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   optionSelected: { borderColor: colors.sideA, backgroundColor: colors.sideASoft },
-});
+}));

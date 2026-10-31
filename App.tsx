@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SessionProvider } from './src/context/session';
 import { RootNavigator } from './src/navigation/RootNavigator';
-import { Loading } from './src/ui';
+import { Loading, ThemeProvider, useTheme } from './src/ui';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -17,15 +17,21 @@ export default function App() {
   });
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" />
-      {fontsLoaded ? (
-        <SessionProvider>
-          <RootNavigator />
-        </SessionProvider>
-      ) : (
-        <Loading />
-      )}
-    </SafeAreaProvider>
+    <ThemeProvider>
+      <SafeAreaProvider>
+        <ThemedStatusBar />
+        {fontsLoaded ? (
+          <SessionProvider>
+            <RootNavigator />
+          </SessionProvider>
+        ) : (
+          <Loading />
+        )}
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
+}
+
+function ThemedStatusBar() {
+  return <StatusBar style={useTheme().scheme === 'dark' ? 'light' : 'dark'} />;
 }

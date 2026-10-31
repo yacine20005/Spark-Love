@@ -1,10 +1,13 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, Easing, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Platform, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, radius, space, stripe } from './theme';
+import { radius, space } from './theme';
+import { makeStyles, useTheme } from './ThemeProvider';
 
 /** The three-band stripe printed across a cassette label. */
 export function Stripe({ style }: { style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles();
+  const { stripe } = useTheme();
   return (
     <View style={[styles.stripe, style]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {stripe.map((c, i) => (
@@ -15,7 +18,10 @@ export function Stripe({ style }: { style?: StyleProp<ViewStyle> }) {
 }
 
 /** A rubber stamp. States are stamped onto things, nothing just disappears. */
-export function Stamp({ label, color = colors.sideA, tilt = -5 }: { label: string; color?: string; tilt?: number }) {
+export function Stamp({ label, color, tilt = -5 }: { label: string; color?: string; tilt?: number }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  color ??= colors.sideA;
   return (
     <View style={[styles.stamp, { borderColor: color, transform: [{ rotate: `${tilt}deg` }] }]}>
       <Text variant="tag" color={color} style={{ letterSpacing: 2 }}>
@@ -27,6 +33,7 @@ export function Stamp({ label, color = colors.sideA, tilt = -5 }: { label: strin
 
 /** Section head set like a cassette-label line: caps, then a rule to the edge. */
 export function SectionHead({ children, right }: { children: string; right?: ReactNode }) {
+  const styles = useStyles();
   return (
     <View style={styles.head}>
       <Text variant="tag">{children}</Text>
@@ -38,6 +45,7 @@ export function SectionHead({ children, right }: { children: string; right?: Rea
 
 /** A tracklist row: label, dot leaders, value. */
 export function TrackRow({ label, value }: { label: string; value: string | number }) {
+  const styles = useStyles();
   return (
     <View style={styles.track}>
       <Text variant="body">{label}</Text>
@@ -54,6 +62,8 @@ const native = Platform.OS !== 'web';
  * the app's signature moment: you answered, now the tape turns over.
  */
 export function Side({ side, who, children, locked }: { side: 'A' | 'B'; who: string; children: ReactNode; locked?: boolean }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const ink = side === 'A' ? colors.sideA : colors.sideB;
   const turn = useRef(new Animated.Value(1)).current;
   const wasLocked = useRef(locked);
@@ -87,7 +97,7 @@ export function Side({ side, who, children, locked }: { side: 'A' | 'B'; who: st
       ]}
     >
       <View style={[styles.sideMark, locked ? styles.sideMarkLocked : { backgroundColor: ink }]}>
-        <Text variant="title" color={locked ? colors.textSubtle : colors.onPrimary} style={styles.sideLetter}>
+        <Text variant="title" color={locked ? colors.textSubtle : colors.onSide} style={styles.sideLetter}>
           {side}
         </Text>
       </View>
@@ -105,7 +115,7 @@ export function Side({ side, who, children, locked }: { side: 'A' | 'B'; who: st
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   stripe: { flexDirection: 'column', gap: 2 },
   stamp: {
     alignSelf: 'flex-start',
@@ -124,4 +134,4 @@ const styles = StyleSheet.create({
   sideMark: { width: 32, height: 32, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   sideMarkLocked: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.textSubtle },
   sideLetter: { fontSize: 22, lineHeight: 26 },
-});
+}));

@@ -1,10 +1,13 @@
-import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { TextInput, View, type TextInputProps } from 'react-native';
 import { Text } from './Text';
-import { colors, radius, space, type } from './theme';
+import { radius, space, makeType } from './theme';
+import { makeStyles, useTheme } from './ThemeProvider';
 
 type Props = TextInputProps & { label: string; error?: string | null; hint?: string };
 
 export function TextField({ label, error, hint, style, multiline, ...rest }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.wrap}>
       <Text variant="label">{label}</Text>
@@ -31,10 +34,10 @@ export function TextField({ label, error, hint, style, multiline, ...rest }: Pro
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrap: { gap: space.xs + 2 },
   input: {
-    ...type.body,
+    ...makeType(colors).body,
     minHeight: 48,
     borderWidth: 1,
     borderColor: colors.border,
@@ -44,4 +47,4 @@ const styles = StyleSheet.create({
     paddingVertical: space.sm + 4,
   },
   multiline: { minHeight: 120, textAlignVertical: 'top' },
-});
+}));

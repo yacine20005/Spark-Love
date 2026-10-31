@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, radius, space } from './theme';
+import { radius, space, type Palette } from './theme';
+import { useTheme } from './ThemeProvider';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -15,15 +16,16 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
-const palette: Record<Variant, { bg: string; fg: string; border?: string }> = {
+const variants = (colors: Palette): Record<Variant, { bg: string; fg: string; border?: string }> => ({
   primary: { bg: colors.primary, fg: colors.onPrimary },
   secondary: { bg: colors.surface, fg: colors.text, border: colors.border },
   ghost: { bg: 'transparent', fg: colors.text },
   danger: { bg: 'transparent', fg: colors.danger, border: colors.border },
-};
+});
 
 export function Button({ title, onPress, variant = 'primary', icon, loading, disabled, style }: Props) {
-  const p = palette[variant];
+  const { colors } = useTheme();
+  const p = variants(colors)[variant];
   const inactive = disabled || loading;
   return (
     <Pressable

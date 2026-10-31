@@ -3,7 +3,7 @@ import { useMemo, useRef } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { tap } from '../lib/haptics';
 import type { SwipeItem } from '../lib/types';
-import { colors, radius, space, Stamp, Stripe, Text } from '../ui';
+import { makeStyles, radius, space, Stamp, Stripe, Text, useTheme } from '../ui';
 
 const THRESHOLD = 110;
 const native = Platform.OS !== 'web';
@@ -11,6 +11,8 @@ const native = Platform.OS !== 'web';
 type Props = { items: SwipeItem[]; onSwipe: (item: SwipeItem, liked: boolean) => void };
 
 export function SwipeDeck({ items, onSwipe }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { width } = useWindowDimensions();
   const pan = useRef(new Animated.ValueXY()).current;
   const [top, next] = items;
@@ -75,6 +77,8 @@ export function SwipeDeck({ items, onSwipe }: Props) {
 }
 
 function CardBody({ item }: { item: SwipeItem }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={{ flex: 1, gap: space.md - 4 }}>
       <View style={styles.art}>
@@ -97,6 +101,8 @@ function CardBody({ item }: { item: SwipeItem }) {
 }
 
 function RoundButton({ icon, label, onPress, primary }: { icon: 'close' | 'heart'; label: string; onPress: () => void; primary?: boolean }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -104,12 +110,12 @@ function RoundButton({ icon, label, onPress, primary }: { icon: 'close' | 'heart
       onPress={onPress}
       style={({ pressed }) => [styles.round, primary && styles.roundPrimary, pressed && { transform: [{ scale: 0.94 }] }]}
     >
-      <Ionicons name={icon} size={30} color={primary ? colors.onPrimary : colors.textMuted} />
+      <Ionicons name={icon} size={30} color={primary ? colors.onSide : colors.textMuted} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   stack: { height: 440 },
   card: {
     ...StyleSheet.absoluteFill,
@@ -137,4 +143,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   roundPrimary: { backgroundColor: colors.sideA, borderColor: colors.sideA },
-});
+}));

@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { fetchMyAnswers, fetchQuestions, saveAnswer } from '../api/quiz';
 import { useHousehold } from '../context/session';
 import { errorMessage } from '../lib/feedback';
 import { useLoader } from '../lib/useLoader';
 import type { StackProps } from '../navigation/types';
-import { Button, colors, ErrorState, Loading, radius, Screen, space, Text } from '../ui';
+import { Button, ErrorState, Loading, makeStyles, radius, Screen, space, Text, useTheme } from '../ui';
 import { QuestionInput } from './QuestionInput';
 
 export function QuizSessionScreen({ route, navigation }: StackProps<'QuizSession'>) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { categoryId, name } = route.params;
   const { me, couple } = useHousehold();
   const [index, setIndex] = useState<number | null>(null);
@@ -89,8 +91,8 @@ export function QuizSessionScreen({ route, navigation }: StackProps<'QuizSession
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   actions: { flexDirection: 'row', gap: space.sm },
   track: { height: 6, borderRadius: radius.pill, backgroundColor: colors.surfaceMuted, overflow: 'hidden' },
   fill: { height: '100%', backgroundColor: colors.sideA, borderRadius: radius.pill },
-});
+}));

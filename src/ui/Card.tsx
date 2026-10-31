@@ -1,10 +1,12 @@
 import { Pressable, View, type ViewProps } from 'react-native';
-import { colors, radius, space } from './theme';
+import { radius, space } from './theme';
+import { useTheme } from './ThemeProvider';
 
 type Props = ViewProps & { onPress?: () => void; accessibilityLabel?: string };
 
 /** A paper insert: hairline edge, no shadow. */
 export function Card({ onPress, style, ...rest }: Props) {
+  const { colors } = useTheme();
   const base = [
     { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.md, borderWidth: 1, borderColor: colors.border },
     style,

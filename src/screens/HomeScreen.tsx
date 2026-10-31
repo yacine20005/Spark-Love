@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { fetchJournal, fetchTodaySparks } from '../api/journal';
 import { fetchProgress } from '../api/quiz';
 import { fetchMatches } from '../api/swipe';
@@ -8,10 +8,11 @@ import { daysSince } from '../lib/dates';
 import { sparkForDate } from '../lib/spark';
 import { useLoader } from '../lib/useLoader';
 import type { TabProps } from '../navigation/types';
-import { Avatar, Button, Card, colors, ErrorState, Loading, radius, Screen, SectionHead, Side, space, Stripe, Text, TrackRow } from '../ui';
+import { Avatar, Button, Card, ErrorState, Loading, makeStyles, radius, Screen, SectionHead, Side, space, Stripe, Text, TrackRow } from '../ui';
 import { LinkPanel } from './LinkPanel';
 
 export function HomeScreen({ navigation }: TabProps<'Home'>) {
+  const styles = useStyles();
   const { me, partner, couple, linked } = useHousehold();
   const prompt = sparkForDate();
 
@@ -48,6 +49,7 @@ export function HomeScreen({ navigation }: TabProps<'Home'>) {
 }
 
 function LinkedHome({ header, prompt, navigation }: { header: React.ReactNode; prompt: string; navigation: TabProps<'Home'>['navigation'] }) {
+  const styles = useStyles();
   const { me, partner } = useHousehold();
   const { data, error, refreshing, refresh, reload } = useLoader(async () => {
     const startOfDay = new Date();
@@ -139,11 +141,11 @@ function LinkedHome({ header, prompt, navigation }: { header: React.ReactNode; p
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, marginBottom: space.sm },
   counterRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   counter: { borderWidth: 1, borderColor: colors.text, borderRadius: radius.sm, paddingHorizontal: 6, paddingVertical: 2 },
   spark: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   sparkBody: { padding: space.md, gap: space.md - 4 },
   photo: { width: '100%', aspectRatio: 16 / 10, backgroundColor: colors.surfaceMuted },
-});
+}));

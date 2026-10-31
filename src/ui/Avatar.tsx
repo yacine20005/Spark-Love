@@ -1,9 +1,11 @@
 import { View } from 'react-native';
 import { Text } from './Text';
-import { colors, radius } from './theme';
+import { radius } from './theme';
+import { useTheme } from './ThemeProvider';
 
 /** Side marker: me is side A (vermilion), my partner is side B (blue). */
 export function Avatar({ name, size = 40, side = 'A' }: { name?: string | null; size?: number; side?: 'A' | 'B' }) {
+  const { colors } = useTheme();
   return (
     <View
       style={{
@@ -15,7 +17,7 @@ export function Avatar({ name, size = 40, side = 'A' }: { name?: string | null; 
         justifyContent: 'center',
       }}
     >
-      <Text variant="title" color={colors.onPrimary} style={{ fontSize: size * 0.55, lineHeight: size * 0.62 }}>
+      <Text variant="title" color={colors.onSide} style={{ fontSize: size * 0.55, lineHeight: size * 0.62 }}>
         {(name?.trim()[0] ?? '?').toUpperCase()}
       </Text>
     </View>
