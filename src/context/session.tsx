@@ -37,13 +37,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     if (!userId) return;
-    try {
-      setHousehold(await fetchHousehold(userId));
-    } catch {
-      // Keep the last known state; screens surface their own errors.
-    } finally {
-      setBooting(false);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        setHousehold(await fetchHousehold(userId));
+        setBooting(false);
+        return;
+      } catch {
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 800));
+      }
     }
+    setBooting(false);
   }, [userId]);
 
   useEffect(() => {

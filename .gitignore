@@ -50,9 +50,6 @@ DESIGN.md
 # Crush local cache
 .crush/
 
-# Github local files
-.github/
-
 # VSCode settings
 .vscode/
 

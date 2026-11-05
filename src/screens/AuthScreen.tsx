@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { errorMessage } from '../lib/feedback';
 import { supabase } from '../lib/supabase';
@@ -10,6 +10,12 @@ WebBrowser.maybeCompleteAuthSession();
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function extractParam(url: string, key: string): string | null {
+  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = url.match(new RegExp(`[?&#]${escaped}=([^&#]+)`));
+  return match ? decodeURIComponent(match[1].replace(/\+/g, ' ')) : null;
+}
+
 export function AuthScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -18,6 +24,8 @@ export function AuthScreen() {
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [busy, setBusy] = useState<'email' | 'code' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const handledCode = useRef<string | null>(null);
+  const inFlight = useRef<Promise<void> | null>(null);
 
   async function run(kind: NonNullable<typeof busy>, fn: () => Promise<void>) {
     setBusy(kind);
@@ -30,6 +38,50 @@ export function AuthScreen() {
       setBusy(null);
     }
   }
+
+  function handleOAuthUrl(url: string): Promise<void> {
+    const errDesc = extractParam(url, 'error_description') ?? extractParam(url, 'error');
+    if (errDesc) return Promise.reject(new Error(errDesc));
+
+    const authCode = extractParam(url, 'code');
+    if (authCode) {
+      if (handledCode.current === authCode && inFlight.current) return inFlight.current;
+      handledCode.current = authCode;
+      inFlight.current = supabase.auth.exchangeCodeForSession(authCode).then(({ error: exchangeError }) => {
+        if (exchangeError) throw exchangeError;
+      });
+      return inFlight.current;
+    }
+
+    const accessToken = extractParam(url, 'access_token');
+    const refreshToken = extractParam(url, 'refresh_token');
+    if (accessToken && refreshToken) {
+      if (handledCode.current === accessToken && inFlight.current) return inFlight.current;
+      handledCode.current = accessToken;
+      inFlight.current = supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error: sessionError }) => {
+          if (sessionError) throw sessionError;
+        });
+      return inFlight.current;
+    }
+    return Promise.resolve();
+  }
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    Linking.getInitialURL().then((url) => {
+      if (url && (url.includes('code=') || url.includes('access_token=') || url.includes('error='))) {
+        run('google', () => handleOAuthUrl(url));
+      }
+    });
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      if (url.includes('code=') || url.includes('access_token=') || url.includes('error=')) {
+        run('google', () => handleOAuthUrl(url));
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   const sendCode = () =>
     run('email', async () => {
@@ -47,7 +99,7 @@ export function AuthScreen() {
 
   const google = () =>
     run('google', async () => {
-      const redirectTo = Linking.createURL('/');
+      const redirectTo = Linking.createURL('auth/callback');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, skipBrowserRedirect: Platform.OS !== 'web' },
@@ -55,11 +107,9 @@ export function AuthScreen() {
       if (error) throw error;
       if (Platform.OS === 'web') return; // the browser navigates away and back
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      if (result.type !== 'success') return;
-      const authCode = new URL(result.url).searchParams.get('code');
-      if (!authCode) throw new Error('Google sign-in was cancelled.');
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
-      if (exchangeError) throw exchangeError;
+      if (result.type === 'success' && result.url) {
+        await handleOAuthUrl(result.url);
+      }
     });
 
   return (
