@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useRef } from 'react';
+import { Image } from 'expo-image';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { tap } from '../lib/haptics';
 import type { SwipeItem } from '../lib/types';
@@ -15,13 +16,20 @@ export function SwipeDeck({ items, onSwipe }: Props) {
   const styles = useStyles();
   const { width } = useWindowDimensions();
   const pan = useRef(new Animated.ValueXY()).current;
+  const flinging = useRef(false);
   const [top, next] = items;
 
+  useEffect(() => {
+    flinging.current = false;
+  }, [top?.id]);
+
   const fling = (liked: boolean) => {
-    if (!top) return;
+    if (!top || flinging.current) return;
+    flinging.current = true;
     tap();
     Animated.timing(pan, { toValue: { x: (liked ? 1 : -1) * width * 1.2, y: 40 }, duration: 220, useNativeDriver: native }).start(() => {
       pan.setValue({ x: 0, y: 0 });
+      flinging.current = false;
       onSwipe(top, liked);
     });
   };
@@ -30,7 +38,7 @@ export function SwipeDeck({ items, onSwipe }: Props) {
   const responder = useMemo(
     () =>
       PanResponder.create({
-        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
+        onMoveShouldSetPanResponder: (_, g) => !flinging.current && Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
         onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
         onPanResponderRelease: (_, g) => {
           if (Math.abs(g.dx) > THRESHOLD) fling(g.dx > 0);
@@ -60,10 +68,10 @@ export function SwipeDeck({ items, onSwipe }: Props) {
           style={[styles.card, { transform: [{ translateX: pan.x }, { translateY: pan.y }, { rotate }] }]}
         >
           <CardBody item={top} />
-          <Animated.View style={[styles.stamp, { left: space.lg, opacity: likeOpacity }]}>
+          <Animated.View pointerEvents="none" style={[styles.stamp, { left: space.lg, opacity: likeOpacity }]}>
             <Stamp label="Yes please" color={colors.success} tilt={-8} />
           </Animated.View>
-          <Animated.View style={[styles.stamp, { right: space.lg, opacity: passOpacity }]}>
+          <Animated.View pointerEvents="none" style={[styles.stamp, { right: space.lg, opacity: passOpacity }]}>
             <Stamp label="Not for us" color={colors.textMuted} tilt={8} />
           </Animated.View>
         </Animated.View>
@@ -79,23 +87,44 @@ export function SwipeDeck({ items, onSwipe }: Props) {
 function CardBody({ item }: { item: SwipeItem }) {
   const { colors } = useTheme();
   const styles = useStyles();
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const showImage = Boolean(item.image_url) && failedUrl !== item.image_url;
+
   return (
-    <View style={{ flex: 1, gap: space.md - 4 }}>
-      <View style={styles.art}>
-        <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={56} color={colors.text} />
+    <View style={styles.body}>
+      <View style={[styles.art, showImage && styles.artPoster]}>
+        {showImage ? (
+          <Image
+            source={{ uri: item.image_url! }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={200}
+            onError={() => setFailedUrl(item.image_url)}
+          />
+        ) : (
+          <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={56} color={colors.text} />
+        )}
         <Stripe style={styles.artStripe} />
       </View>
-      <Text variant="title">{item.title}</Text>
-      <Text variant="bodyMuted">{item.description}</Text>
-      <View style={styles.tags}>
-        {item.tags.map((t) => (
-          <View key={t} style={styles.tag}>
-            <Text variant="caption" color={colors.textMuted}>
-              {t}
-            </Text>
-          </View>
-        ))}
-      </View>
+      <Text variant="title" numberOfLines={2}>
+        {item.title}
+      </Text>
+      {item.description ? (
+        <Text variant="bodyMuted" numberOfLines={showImage ? 3 : 4}>
+          {item.description}
+        </Text>
+      ) : null}
+      {item.tags.length > 0 && (
+        <View style={styles.tags}>
+          {item.tags.map((t, idx) => (
+            <View key={`${t}-${idx}`} style={styles.tag}>
+              <Text variant="caption" color={colors.textMuted} numberOfLines={1}>
+                {t}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -116,7 +145,7 @@ function RoundButton({ icon, label, onPress, primary }: { icon: 'close' | 'heart
 }
 
 const useStyles = makeStyles((colors) => ({
-  stack: { height: 440 },
+  stack: { height: 480 },
   card: {
     ...StyleSheet.absoluteFill,
     backgroundColor: colors.surface,
@@ -124,13 +153,24 @@ const useStyles = makeStyles((colors) => ({
     borderWidth: 1,
     borderColor: colors.border,
     padding: space.md,
+    overflow: 'hidden',
   },
   behind: { transform: [{ scale: 0.95 }, { translateY: 14 }], opacity: 0.7 },
-  art: { height: 150, borderRadius: radius.md, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', marginBottom: space.xs },
+  body: { flex: 1, gap: space.sm + 2, overflow: 'hidden' },
+  art: {
+    height: 150,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: space.xs,
+  },
+  artPoster: { height: 216 },
   artStripe: { position: 'absolute', left: 0, right: 0, bottom: 0 },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2 },
-  tag: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: 3 },
-  stamp: { position: 'absolute', top: space.lg, backgroundColor: colors.surface },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2, overflow: 'hidden' },
+  tag: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: 3, maxWidth: '100%' },
+  stamp: { position: 'absolute', top: space.lg, backgroundColor: colors.surface, borderRadius: radius.sm },
   buttons: { flexDirection: 'row', justifyContent: 'center', gap: space.xl },
   round: {
     width: 64,

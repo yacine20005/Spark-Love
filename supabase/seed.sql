@@ -119,37 +119,6 @@ from (values
 join public.quiz_categories c on c.name = v.category;
 
 insert into public.swipe_items (kind, title, description, tags, icon, sort_order) values
-  ('movie', 'Before Sunrise', 'Two strangers on a train spend one night walking and talking through Vienna.', '{romance,drama,1995}', 'train-outline', 1),
-  ('movie', 'La La Land', 'A jazz pianist and an actress fall for each other while chasing their dreams in LA.', '{musical,romance,2016}', 'musical-notes-outline', 2),
-  ('movie', 'Amélie', 'A shy Parisian waitress secretly orchestrates small joys for the people around her.', '{comedy,romance,2001}', 'cafe-outline', 3),
-  ('movie', 'Eternal Sunshine of the Spotless Mind', 'A couple erases each other from memory, then fights to hold on.', '{sci-fi,romance,2004}', 'cloudy-night-outline', 4),
-  ('movie', 'Spirited Away', 'A girl wanders into a spirit world and must work in a bathhouse to save her parents.', '{animation,fantasy,2001}', 'leaf-outline', 5),
-  ('movie', 'Knives Out', 'A detective untangles a wealthy family after their patriarch dies on his birthday.', '{mystery,comedy,2019}', 'search-outline', 6),
-  ('movie', 'The Grand Budapest Hotel', 'A legendary concierge and his lobby boy are swept up in a stolen-painting caper.', '{comedy,adventure,2014}', 'business-outline', 7),
-  ('movie', 'Pride & Prejudice', 'Elizabeth Bennet and Mr. Darcy misjudge each other, then slowly don''t.', '{romance,period,2005}', 'rose-outline', 8),
-  ('movie', 'Mad Max: Fury Road', 'A relentless desert chase across a wasteland, two hours of pure momentum.', '{action,2015}', 'car-sport-outline', 9),
-  ('movie', 'Inception', 'A thief who steals secrets through dreams is hired to plant an idea instead.', '{sci-fi,thriller,2010}', 'infinite-outline', 10),
-  ('movie', 'Crazy Rich Asians', 'A professor meets her boyfriend''s ultra-wealthy family in Singapore.', '{romcom,2018}', 'diamond-outline', 11),
-  ('movie', 'Paddington 2', 'A marmalade-loving bear is framed for theft and wins over a prison.', '{family,comedy,2017}', 'paw-outline', 12),
-  ('movie', 'Get Out', 'A weekend visit to meet the girlfriend''s parents turns deeply wrong.', '{horror,thriller,2017}', 'eye-outline', 13),
-  ('movie', 'Past Lives', 'Childhood sweethearts reunite twenty years later in New York.', '{drama,romance,2023}', 'airplane-outline', 14),
-  ('movie', 'Everything Everywhere All at Once', 'A laundromat owner fights across the multiverse to save her family.', '{sci-fi,comedy,2022}', 'planet-outline', 15),
-  ('movie', 'The Princess Bride', 'A farmhand turned pirate rescues his true love. Swordfights, giants, R.O.U.S.', '{fantasy,romance,1987}', 'book-outline', 16),
-  ('movie', 'Up', 'A widower ties balloons to his house and flies off with an accidental stowaway.', '{animation,adventure,2009}', 'balloon-outline', 17),
-  ('movie', 'Parasite', 'A poor family cons its way into a rich household, until it doesn''t work.', '{thriller,drama,2019}', 'home-outline', 18),
-  ('movie', 'When Harry Met Sally', 'Can men and women just be friends? Twelve years of trying to find out.', '{romcom,1989}', 'chatbubbles-outline', 19),
-  ('movie', 'Dune', 'A noble heir is thrown into a war over the most valuable desert in the universe.', '{sci-fi,epic,2021}', 'sunny-outline', 20),
-  ('movie', 'The Notebook', 'An old man reads a summer love story to a woman in a care home.', '{romance,drama,2004}', 'journal-outline', 21),
-  ('movie', 'Spider-Man: Into the Spider-Verse', 'Teenager Miles Morales meets Spider-People from other dimensions.', '{animation,action,2018}', 'color-palette-outline', 22),
-  ('movie', 'Mamma Mia!', 'A bride invites three men who might be her father to a Greek island wedding.', '{musical,comedy,2008}', 'boat-outline', 23),
-  ('movie', 'Interstellar', 'Astronauts cross a wormhole looking for a new home for humanity.', '{sci-fi,drama,2014}', 'rocket-outline', 24),
-  ('movie', 'About Time', 'A young man who can time-travel uses it to get love, and life, right.', '{romance,fantasy,2013}', 'time-outline', 25),
-  ('movie', 'Ratatouille', 'A rat with a gift for cooking teams up with a hapless Paris kitchen boy.', '{animation,comedy,2007}', 'restaurant-outline', 26),
-  ('movie', 'Gone Girl', 'On their fifth anniversary, a wife disappears and the husband looks guilty.', '{thriller,mystery,2014}', 'newspaper-outline', 27),
-  ('movie', 'Mean Girls', 'A new student infiltrates the most popular clique at her high school.', '{comedy,2004}', 'school-outline', 28),
-  ('movie', 'Portrait of a Lady on Fire', 'A painter is hired to secretly paint a reluctant bride on a Breton island.', '{romance,period,2019}', 'flame-outline', 29),
-  ('movie', 'Top Gun: Maverick', 'A veteran pilot trains young aviators for an impossible mission.', '{action,2022}', 'airplane-outline', 30),
-
   ('date', 'Picnic at sunset', 'Pack cheese, fruit and a blanket, then find the best view in town.', '{outdoor,cheap}', 'sunny-outline', 1),
   ('date', 'Cook a new cuisine', 'Pick a country neither of you has cooked from and make a full dinner.', '{home,food}', 'restaurant-outline', 2),
   ('date', 'Stargazing night', 'Drive away from the city lights with a thermos and a star-map app.', '{outdoor,night}', 'moon-outline', 3),
@@ -179,4 +148,5 @@ insert into public.swipe_items (kind, title, description, tags, icon, sort_order
   ('date', 'Kayak or paddleboard', 'Rent one for an hour on a lake or river.', '{outdoor,active}', 'boat-outline', 27),
   ('date', 'Street food crawl', 'Five stops, one dish each, split everything.', '{food,outdoor}', 'fast-food-outline', 28),
   ('date', 'Planetarium or observatory', 'Lie back and let someone else explain the universe.', '{culture,indoor}', 'planet-outline', 29),
-  ('date', 'Thirty-six questions', 'Go through the famous "36 questions to fall in love" over dinner.', '{talk,home}', 'help-circle-outline', 30);
+  ('date', 'Thirty-six questions', 'Go through the famous "36 questions to fall in love" over dinner.', '{talk,home}', 'help-circle-outline', 30)
+on conflict (kind, title) where external_id is null do nothing;

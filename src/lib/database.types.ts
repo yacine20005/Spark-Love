@@ -133,14 +133,14 @@ isOneToOne: false
                   ]
                 },"swipe_items": {
                   Row: {
-                    "description": string,"icon": string,"id": string,"image_url": string | null,"kind": Database["public"]['Enums']["swipe_kind"],"sort_order": number,"tags": (string)[],"title": string
+                    "description": string,"external_id": string | null,"icon": string,"id": string,"image_url": string | null,"kind": Database["public"]['Enums']["swipe_kind"],"sort_order": number,"tags": (string)[],"title": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "description": string,"icon": string,"id"?: string,"image_url"?: string | null,"kind": Database["public"]['Enums']["swipe_kind"],"sort_order"?: number,"tags"?: (string)[],"title": string
+                    "description": string,"external_id"?: string | null,"icon": string,"id"?: string,"image_url"?: string | null,"kind": Database["public"]['Enums']["swipe_kind"],"sort_order"?: number,"tags"?: (string)[],"title": string
                   }
                   Update: {
-                    "description"?: string,"icon"?: string,"id"?: string,"image_url"?: string | null,"kind"?: Database["public"]['Enums']["swipe_kind"],"sort_order"?: number,"tags"?: (string)[],"title"?: string
+                    "description"?: string,"external_id"?: string | null,"icon"?: string,"id"?: string,"image_url"?: string | null,"kind"?: Database["public"]['Enums']["swipe_kind"],"sort_order"?: number,"tags"?: (string)[],"title"?: string
                   }
                   Relationships: [
                     
@@ -205,12 +205,19 @@ isOneToOne: false
               "category_id": string,"mine": number,"partner": number,"total": number
             }[]
                            },
+"reset_swipes":
+{ Args: { "p_kind": Database["public"]['Enums']["swipe_kind"] }; Returns: undefined
+                           },
 "swipe":
 { Args: { "p_item_id": string,"p_liked": boolean }; Returns: boolean
+                           },
+"swipe_external":
+{ Args: { "p_description": string,"p_external_id": string,"p_icon": string,"p_image_url": string | null,"p_kind": Database["public"]['Enums']["swipe_kind"],"p_liked": boolean,"p_tags": string[],"p_title": string }; Returns: boolean
                            },
 "swipe_matches":
 { Args: Record<PropertyKey, never>; Returns: {
               "description": string,
+"external_id": string | null,
 "icon": string,
 "id": string,
 "image_url": string | null,
@@ -227,7 +234,7 @@ isOneToOne: false
       } }
           }
           Enums: {
-            "journal_kind": "note"|"memory"|"spark","question_type": "multiple_choice"|"scale"|"text"|"yes_no","swipe_kind": "movie"|"date"
+            "journal_kind": "note"|"memory"|"spark","question_type": "multiple_choice"|"scale"|"text"|"yes_no","swipe_kind": "movie"|"tv"|"date"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -343,7 +350,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "journal_kind": ["note", "memory", "spark"],"question_type": ["multiple_choice", "scale", "text", "yes_no"],"swipe_kind": ["movie", "date"]
+            "journal_kind": ["note", "memory", "spark"],"question_type": ["multiple_choice", "scale", "text", "yes_no"],"swipe_kind": ["movie", "tv", "date"]
           }
         }
 } as const

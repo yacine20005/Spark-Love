@@ -10,3 +10,7 @@ export type SwipeKind = Database['public']['Enums']['swipe_kind'];
 export type JournalKind = Database['public']['Enums']['journal_kind'];
 export type QuizProgress = Database['public']['Functions']['quiz_progress']['Returns'][number];
 export type ComparedAnswer = Database['public']['Functions']['compare_category']['Returns'][number];
+export type DeckPage = {
+  items: SwipeItem[];
+  nextPage: number | null;
+};
