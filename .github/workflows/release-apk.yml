@@ -20,6 +20,8 @@ jobs:
     env:
       EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || 'https://ngehuqbzfzjeusshwubw.supabase.co' }}
       EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_rn9gtb0eB2E5Du-85yfX2Q_rf8T9iNJ' }}
+      EXPO_PUBLIC_TMDB_READ_TOKEN: ${{ secrets.EXPO_PUBLIC_TMDB_READ_TOKEN }}
+      EXPO_PUBLIC_TMDB_API_KEY: ${{ secrets.EXPO_PUBLIC_TMDB_API_KEY }}
 
     steps:
       - name: Checkout repository
