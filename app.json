@@ -19,6 +19,13 @@
       }
     },
     "web": {
+      "name": "Spark Love",
+      "shortName": "Spark Love",
+      "description": "A small, private app for two. Daily sparks, quizzes, swipes, and a shared journal.",
+      "lang": "en",
+      "backgroundColor": "#F1EADB",
+      "display": "standalone",
+      "orientation": "portrait",
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },

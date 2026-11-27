@@ -18,6 +18,7 @@ import { QuizResultsScreen } from '../screens/QuizResultsScreen';
 import { QuizSessionScreen } from '../screens/QuizSessionScreen';
 import { QuizzesScreen } from '../screens/QuizzesScreen';
 import { useMemo } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fonts, Loading, useTheme } from '../ui';
 import type { StackParams, TabParams } from './types';
 
@@ -34,6 +35,7 @@ const tabIcons: Record<keyof TabParams, [keyof typeof Ionicons.glyphMap, keyof t
 
 function Tabs() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -44,7 +46,7 @@ function Tabs() {
         tabBarStyle: {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
-          ...(Platform.OS === 'web' && { height: 60, paddingBottom: 8 }),
+          ...(Platform.OS === 'web' && { height: 60 + insets.bottom, paddingBottom: 8 + insets.bottom }),
         },
         tabBarIcon: ({ focused, color, size }) => (
           <Ionicons name={tabIcons[route.name][focused ? 0 : 1]} color={color} size={size} />
@@ -61,6 +63,11 @@ function Tabs() {
 
 const linking = { prefixes: [Linking.createURL('/')] };
 
+const documentTitle = {
+  formatter: (options: Record<string, unknown> | undefined) =>
+    typeof options?.title === 'string' && options.title ? `${options.title} — Spark Love` : 'Spark Love',
+};
+
 export function RootNavigator() {
   const { colors, scheme } = useTheme();
   const { session, household, booting } = useSession();
@@ -74,7 +81,7 @@ export function RootNavigator() {
   if (booting || (session && !household)) return <Loading />;
 
   return (
-    <NavigationContainer theme={theme} linking={linking}>
+    <NavigationContainer theme={theme} linking={Platform.OS === 'web' ? undefined : linking} documentTitle={documentTitle}>
       <Stack.Navigator
         screenOptions={{
           headerShadowVisible: false,

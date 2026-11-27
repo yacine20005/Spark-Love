@@ -1,6 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { AppState } from 'react-native';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { AppState, Platform } from 'react-native';
 import { fetchHousehold, type Household } from '../api/couple';
 import { supabase } from '../lib/supabase';
 
@@ -19,34 +19,66 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [household, setHousehold] = useState<Household | null>(null);
   const [booting, setBooting] = useState(true);
   const userId = session?.user.id;
+  const activeUserIdRef = useRef<string | undefined>(undefined);
+  activeUserIdRef.current = userId;
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (!data.session) setBooting(false);
-    });
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+    let mounted = true;
+
+    const applySession = (next: Session | null) => {
+      if (!mounted) return;
       setSession(next);
-      if (!next) {
-        setHousehold(null);
-        setBooting(false);
-      }
+      setHousehold((prev) => {
+        if (!next) return null;
+        return prev && prev.me.id !== next.user.id ? null : prev;
+      });
+      if (!next) setBooting(false);
+    };
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => applySession(data.session))
+      .catch(() => applySession(null));
+
+    const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+      applySession(next);
     });
-    return () => data.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   const refresh = useCallback(async () => {
     if (!userId) return;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        setHousehold(await fetchHousehold(userId));
+        const nextHousehold = await fetchHousehold(userId);
+        if (activeUserIdRef.current !== userId) return;
+        setHousehold(nextHousehold);
         setBooting(false);
         return;
       } catch {
         if (attempt < 2) await new Promise((r) => setTimeout(r, 800));
       }
     }
-    setBooting(false);
+
+    // If profile fetch failed repeatedly, check whether the session itself was revoked or deleted
+    // so the app never gets stranded on the boot loader.
+    if (activeUserIdRef.current === userId) {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        const invalidSession =
+          !data.user ||
+          (error != null && (error.status === 401 || error.status === 403 || error.status === 404));
+        if (invalidSession) {
+          await supabase.auth.signOut({ scope: 'local' });
+        }
+      } catch {
+        // Offline or transient network failure; keep the session and retry when back online.
+      }
+      setBooting(false);
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -55,6 +87,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => s === 'active' && refresh());
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const onOnline = () => void refresh();
+      window.addEventListener('online', onOnline);
+      return () => {
+        sub.remove();
+        window.removeEventListener('online', onOnline);
+      };
+    }
     return () => sub.remove();
   }, [refresh]);
 

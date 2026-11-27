@@ -1,10 +1,12 @@
 import * as Clipboard from 'expo-clipboard';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, Share, View } from 'react-native';
 import { createInvite, joinCouple } from '../api/couple';
 import { useHousehold } from '../context/session';
 import { errorMessage } from '../lib/feedback';
 import { Button, Card, fonts, makeStyles, radius, space, Text, TextField } from '../ui';
+
+const canWebShare = Platform.OS === 'web' && typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
 /** Create/share an invite code, or join with your partner's. */
 export function LinkPanel({ onLinked }: { onLinked?: () => void }) {
@@ -15,6 +17,12 @@ export function LinkPanel({ onLinked }: { onLinked?: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const myCode = couple?.invite_code ?? null;
+
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => setCopied(false), 2500);
+    return () => clearTimeout(id);
+  }, [copied]);
 
   async function create() {
     setBusy('create');
@@ -42,11 +50,34 @@ export function LinkPanel({ onLinked }: { onLinked?: () => void }) {
     }
   }
 
+  async function copyCode() {
+    if (!myCode) return;
+    try {
+      await Clipboard.setStringAsync(myCode);
+      setCopied(true);
+    } catch {
+      try {
+        await navigator.clipboard?.writeText(myCode);
+        setCopied(true);
+      } catch {
+        setError('Could not copy automatically. Select and copy the code above.');
+      }
+    }
+  }
+
   async function share() {
+    if (!myCode) return;
     const message = `Join me on Spark Love. My invite code is ${myCode}`;
     if (Platform.OS === 'web') {
-      await Clipboard.setStringAsync(myCode!);
-      setCopied(true);
+      if (canWebShare) {
+        try {
+          await navigator.share({ title: 'Spark Love', text: message });
+          return;
+        } catch (e) {
+          if (e instanceof Error && e.name === 'AbortError') return;
+        }
+      }
+      await copyCode();
     } else {
       await Share.share({ message });
     }
@@ -71,8 +102,22 @@ export function LinkPanel({ onLinked }: { onLinked?: () => void }) {
               </Text>
             </View>
             <Button
-              title={Platform.OS === 'web' ? (copied ? 'Copied' : 'Copy code') : 'Share code'}
-              icon={Platform.OS === 'web' ? (copied ? 'checkmark' : 'copy-outline') : 'share-outline'}
+              title={
+                Platform.OS === 'web' && !canWebShare
+                  ? copied
+                    ? 'Copied'
+                    : 'Copy code'
+                  : copied
+                    ? 'Copied'
+                    : 'Share code'
+              }
+              icon={
+                copied
+                  ? 'checkmark'
+                  : Platform.OS === 'web' && !canWebShare
+                    ? 'copy-outline'
+                    : 'share-outline'
+              }
               onPress={share}
             />
             <Text variant="caption" center>

@@ -1,13 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { tap } from '../lib/haptics';
 import type { SwipeItem } from '../lib/types';
 import { makeStyles, radius, space, Stamp, Stripe, Text, useTheme } from '../ui';
 
 const THRESHOLD = 110;
 const native = Platform.OS !== 'web';
+const webCardStyle: ViewStyle | undefined = Platform.OS === 'web'
+  ? ({ userSelect: 'none', touchAction: 'none', cursor: 'grab' } as unknown as ViewStyle)
+  : undefined;
 
 type Props = { items: SwipeItem[]; onSwipe: (item: SwipeItem, liked: boolean) => void };
 
@@ -15,6 +18,7 @@ export function SwipeDeck({ items, onSwipe }: Props) {
   const { colors } = useTheme();
   const styles = useStyles();
   const { width } = useWindowDimensions();
+  const deckWidth = Math.min(width, 480);
   const pan = useRef(new Animated.ValueXY()).current;
   const flinging = useRef(false);
   const [top, next] = items;
@@ -27,7 +31,7 @@ export function SwipeDeck({ items, onSwipe }: Props) {
     if (!top || flinging.current) return;
     flinging.current = true;
     tap();
-    Animated.timing(pan, { toValue: { x: (liked ? 1 : -1) * width * 1.2, y: 40 }, duration: 220, useNativeDriver: native }).start(() => {
+    Animated.timing(pan, { toValue: { x: (liked ? 1 : -1) * deckWidth * 1.2, y: 40 }, duration: 220, useNativeDriver: native }).start(() => {
       pan.setValue({ x: 0, y: 0 });
       flinging.current = false;
       onSwipe(top, liked);
@@ -44,14 +48,17 @@ export function SwipeDeck({ items, onSwipe }: Props) {
           if (Math.abs(g.dx) > THRESHOLD) fling(g.dx > 0);
           else Animated.spring(pan, { toValue: { x: 0, y: 0 }, friction: 6, useNativeDriver: native }).start();
         },
+        onPanResponderTerminate: () => {
+          Animated.spring(pan, { toValue: { x: 0, y: 0 }, friction: 6, useNativeDriver: native }).start();
+        },
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [top?.id],
+    [top?.id, deckWidth],
   );
 
   if (!top) return null;
 
-  const rotate = pan.x.interpolate({ inputRange: [-width, 0, width], outputRange: ['-12deg', '0deg', '12deg'] });
+  const rotate = pan.x.interpolate({ inputRange: [-deckWidth, 0, deckWidth], outputRange: ['-12deg', '0deg', '12deg'] });
   const likeOpacity = pan.x.interpolate({ inputRange: [0, THRESHOLD], outputRange: [0, 1], extrapolate: 'clamp' });
   const passOpacity = pan.x.interpolate({ inputRange: [-THRESHOLD, 0], outputRange: [1, 0], extrapolate: 'clamp' });
 
@@ -65,9 +72,11 @@ export function SwipeDeck({ items, onSwipe }: Props) {
         )}
         <Animated.View
           {...responder.panHandlers}
-          style={[styles.card, { transform: [{ translateX: pan.x }, { translateY: pan.y }, { rotate }] }]}
+          style={[styles.card, webCardStyle, { transform: [{ translateX: pan.x }, { translateY: pan.y }, { rotate }] }]}
         >
-          <CardBody item={top} />
+          <View style={{ flex: 1 }} pointerEvents="none">
+            <CardBody item={top} />
+          </View>
           <Animated.View pointerEvents="none" style={[styles.stamp, { left: space.lg, opacity: likeOpacity }]}>
             <Stamp label="Yes please" color={colors.success} tilt={-8} />
           </Animated.View>

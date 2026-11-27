@@ -13,7 +13,7 @@ export function LinkScreen({ navigation }: StackProps<'Link'>) {
   }, [linked, navigation]);
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={['bottom']}>
       <LinkPanel />
     </Screen>
   );
